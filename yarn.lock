@@ -924,10 +924,9 @@ turtlecoin-crypto@^3.1.0:
     bindings "^1.5.0"
     nan "^2.14.0"
 
-turtlecoin-utils@^1.0.15:
-  version "1.0.15"
-  resolved "https://registry.yarnpkg.com/turtlecoin-utils/-/turtlecoin-utils-1.0.15.tgz#3eddded6feca14580b846aafa370ef6604ecd6cf"
-  integrity sha512-nVMst3fZNmDG97kPyk5I+f05CD4+0o0F0m2J21IVddd/i2Fw/Id/brnemuMlgi1llAq1zhQYP1AVkjra1RPI4w==
+turtlecoin-utils@turtlecoin/turtlecoin-utils#development:
+  version "1.0.18"
+  resolved "https://codeload.github.com/turtlecoin/turtlecoin-utils/tar.gz/b64de7b9f0946ffb5af5e7223d2e5c5a1c17ec4b"
   dependencies:
     crc "^3.8.0"
     get-random-values "^1.2.0"

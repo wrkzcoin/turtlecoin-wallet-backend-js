@@ -5,8 +5,8 @@
 import * as _ from 'lodash';
 
 import {
-    CreatedTransaction, DecodedAddress, Output, RandomOutput, Transaction,
-    TxDestination, Vout, Wallet,
+    GeneratedTransaction, Address, Output, RandomOutput, Transaction,
+    Wallet, GeneratedOutput, TransactionOutput
 } from 'turtlecoin-utils';
 
 import { Config } from './Config';
@@ -126,7 +126,7 @@ export async function sendFusionTransactionAdvanced(
     /* Fusion transactions are free */
     const fee: number = 0;
 
-    let fusionTX: CreatedTransaction;
+    let fusionTX: GeneratedTransaction;
 
     while (true) {
         /* Not enough unspent inputs for a fusion TX, we're fully optimized */
@@ -359,7 +359,7 @@ async function makeTransaction(
     addressesAndAmounts: Array<[string, number]>,
     subWallets: SubWallets,
     daemon: IDaemon,
-    config: Config): Promise<([CreatedTransaction, undefined]) | ([undefined, WalletError])> {
+    config: Config): Promise<([GeneratedTransaction, undefined]) | ([undefined, WalletError])> {
 
     let amounts: Array<[string, number]> = [];
 
@@ -373,8 +373,8 @@ async function makeTransaction(
     amounts = _.sortBy(amounts, ([address, amount]) => amount);
 
     /* Prepare destinations keys */
-    const transfers: TxDestination[] = amounts.map(([address, amount]) => {
-        const decoded: DecodedAddress = CryptoUtils(config).decodeAddress(address);
+    const transfers: GeneratedOutput[] = amounts.map(([address, amount]) => {
+        const decoded: Address = CryptoUtils(config).decodeAddress(address);
 
         /* Assign payment ID from integrated address if present */
         if (decoded.paymentId !== '') {
@@ -423,7 +423,9 @@ async function makeTransaction(
             globalIndex: input.input.globalOutputIndex as number,
             index: input.input.transactionIndex,
             input: {
+                publicEphemeral: undefined as any,
                 privateEphemeral: input.input.privateEphemeral,
+                transactionKey: undefined as any,
             },
             key: input.input.key,
             keyImage: input.input.keyImage,
@@ -442,14 +444,14 @@ async function makeTransaction(
             paymentID,
         );
 
-        return [tx, undefined];
+        return [tx as GeneratedTransaction, undefined];
     } catch (err) {
         return [undefined, new WalletError(WalletErrorCode.UNKNOWN_ERROR, err.toString())];
     }
 }
 
 async function verifyAndSendTransaction(
-    tx: CreatedTransaction,
+    tx: GeneratedTransaction,
     fee: number,
     paymentID: string,
     inputs: TxInputAndOwner[],
@@ -510,7 +512,7 @@ async function verifyAndSendTransaction(
 
     /* Store the unconfirmed transaction, update our balance */
     const returnTX: TX = await storeSentTransaction(
-        tx.hash, tx.transaction.outputs, tx.transaction.transactionKeys.publicKey, 
+        tx.hash, tx.transaction.outputs, tx.transaction.publicKey,
         fee, paymentID, inputs, subWallets, config
     );
 
@@ -524,7 +526,7 @@ async function verifyAndSendTransaction(
 
 async function storeSentTransaction(
     hash: string,
-    keyOutputs: Vout[],
+    keyOutputs: TransactionOutput[],
     txPublicKey: string,
     fee: number,
     paymentID: string,
@@ -622,7 +624,7 @@ function isTransactionPayloadTooBig(
  * Verify all the output amounts are members of PRETTY_AMOUNTS, otherwise they
  * will not be mixable
  */
-function verifyAmounts(amounts: Vout[]): boolean {
+function verifyAmounts(amounts: TransactionOutput[]): boolean {
     for (const vout of amounts) {
         if (!PRETTY_AMOUNTS.includes(vout.amount)) {
             return false;
@@ -640,7 +642,7 @@ function verifyTransactionFee(transaction: Transaction, expectedFee: number): bo
     let outputTotal: number = 0;
 
     for (const input of transaction.inputs) {
-        inputTotal += input.amount;
+        inputTotal += input.amount!;
     }
 
     for (const output of transaction.outputs) {

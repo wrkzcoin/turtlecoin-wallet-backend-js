@@ -8,16 +8,21 @@ import request = require('request-promise-native');
 
 import { EventEmitter } from 'events';
 
+import * as utils from 'turtlecoin-utils';
 import * as http from 'http';
 import * as https from 'https';
 
 import { assertString, assertNumber, assertBooleanOrUndefined } from './Assert';
-import { Block, TopBlock, DaemonType, DaemonConnection } from './Types';
 import { Config, IConfig, MergeConfig } from './Config';
 import { IDaemon } from './IDaemon';
 import { validateAddresses } from './ValidateParameters';
 import { LogCategory, logger, LogLevel } from './Logger';
 import { WalletError, WalletErrorCode } from './WalletError';
+
+import {
+    Block, TopBlock, DaemonType, DaemonConnection, RawCoinbaseTransaction,
+    RawTransaction, KeyOutput, KeyInput
+} from './Types';
 
 /**
  * @noInheritDoc
@@ -83,6 +88,11 @@ export class Daemon extends EventEmitter implements IDaemon {
      * The hashrate of the last known local block
      */
     private lastKnownHashrate = 0;
+
+    /**
+     * Should we use /getrawblocks instead of /getwalletsyncdata
+     */
+    private useRawBlocks = true;
 
     private config: Config = new Config();
 
@@ -303,10 +313,12 @@ export class Daemon extends EventEmitter implements IDaemon {
         startTimestamp: number,
         blockCount: number): Promise<[Block[], TopBlock | boolean]> {
 
+        const endpoint: string = this.useRawBlocks ? '/getrawblocks' : '/getwalletsyncdata';
+
         let data;
 
         try {
-            data = await this.makePostRequest('/getwalletsyncdata', {
+            data = await this.makePostRequest(endpoint, {
                 blockCount,
                 blockHashCheckpoints,
                 skipCoinbaseTransactions: !this.config.scanCoinbaseTransactions,
@@ -314,6 +326,20 @@ export class Daemon extends EventEmitter implements IDaemon {
                 startTimestamp,
             });
         } catch (err) {
+            /* Daemon doesn't support /getrawblocks, full back to /getwalletsyncdata */
+            if (err.statusCode === 404 && this.useRawBlocks) {
+                console.log('Disabling raw blocks');
+
+                this.useRawBlocks = false;
+
+                return this.getWalletSyncData(
+                    blockHashCheckpoints,
+                    startHeight,
+                    startTimestamp,
+                    blockCount
+                );
+            }
+
             logger.log(
                 'Failed to get wallet sync data: ' + err.toString(),
                 LogLevel.INFO,
@@ -330,10 +356,18 @@ export class Daemon extends EventEmitter implements IDaemon {
         }
 
         if (data.synced && data.topBlock && data.topBlock.height && data.topBlock.hash) {
-            return [data.items.map(Block.fromJSON), data.topBlock];
+            if (this.useRawBlocks) {
+                return [this.rawBlocksToBlocks(data.items), data.topBlock];
+            } else {
+                return [data.items.map(Block.fromJSON), data.topBlock];
+            }
         }
 
-        return [data.items.map(Block.fromJSON), true];
+        if (this.useRawBlocks) {
+            return [this.rawBlocksToBlocks(data.items), true];
+        } else {
+            return [data.items.map(Block.fromJSON), true];
+        }
     }
 
     /**
@@ -480,6 +514,79 @@ export class Daemon extends EventEmitter implements IDaemon {
 
     public getConnectionString(): string {
         return this.host + ':' + this.port;
+    }
+
+    private rawBlocksToBlocks(rawBlocks: any): Block[] {
+        const result: Block[] = [];
+
+        for (const rawBlock of rawBlocks) {
+            const block = new utils.Block(rawBlock.block);
+
+            let coinbaseTransaction: RawCoinbaseTransaction | undefined = undefined;
+
+            if (this.config.scanCoinbaseTransactions) {
+                const rawCoinbase = new (utils as any).Transaction(block.parentBlock.minerTransaction);
+
+                const keyOutputs: KeyOutput[] = [];
+
+                for (const output of rawCoinbase.outputs) {
+                    keyOutputs.push(new KeyOutput(
+                        output.key,
+                        output.amount,
+                    ));
+                }
+
+                coinbaseTransaction = new RawCoinbaseTransaction(
+                    keyOutputs,
+                    rawCoinbase.hash,
+                    rawCoinbase.publicKey,
+                    rawCoinbase.paymentId,
+                );
+            }
+
+            const transactions: RawTransaction[] = [];
+
+            for (const tx of rawBlock.transactions) {
+                const rawTX = new (utils as any).Transaction(tx);
+
+                const keyOutputs: KeyOutput[] = [];
+                const keyInputs: KeyInput[] = [];
+
+                for (const output of rawTX.outputs) {
+                    keyOutputs.push(new KeyOutput(
+                        output.key,
+                        output.amount,
+                    ));
+                }
+
+                for (const input of rawTX.inputs) {
+                    keyInputs.push(new KeyInput(
+                        input.amount,
+                        input.keyImage,
+                        input.outputIndexes,
+                    ));
+                }
+
+                transactions.push(new RawTransaction(
+                    keyOutputs,
+                    rawTX.hash,
+                    rawTX.publicKey,
+                    rawTX.unlockTime,
+                    rawTX.paymentId,
+                    keyInputs,
+                ));
+            }
+
+            result.push(new Block(
+                transactions,
+                block.height as number,
+                block.hash,
+                block.timestamp,
+                coinbaseTransaction,
+            ));
+        }
+
+        return result;
     }
 
     /**

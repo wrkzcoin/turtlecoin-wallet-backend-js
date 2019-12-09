@@ -507,7 +507,7 @@ export class WalletSynchronizer extends EventEmitter {
             );
         } catch (err) {
             logger.log(
-                'Failed to get blocks from daemon',
+                'Failed to get blocks from daemon: ' + err.toString(),
                 LogLevel.DEBUG,
                 LogCategory.SYNC,
             );
