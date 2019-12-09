@@ -5,8 +5,8 @@
 import * as _ from 'lodash';
 
 import {
-    GeneratedTransaction, Address, Output, RandomOutput, Transaction,
-    Wallet, GeneratedOutput, TransactionOutput
+    GeneratedTransaction, Output, RandomOutput, Transaction,
+    Wallet, GeneratedOutput, TransactionOutput, DecodedAddress
 } from 'turtlecoin-utils';
 
 import { Config } from './Config';
@@ -374,7 +374,7 @@ async function makeTransaction(
 
     /* Prepare destinations keys */
     const transfers: GeneratedOutput[] = amounts.map(([address, amount]) => {
-        const decoded: Address = CryptoUtils(config).decodeAddress(address);
+        const decoded: DecodedAddress = CryptoUtils(config).decodeAddress(address);
 
         /* Assign payment ID from integrated address if present */
         if (decoded.paymentId !== '') {
