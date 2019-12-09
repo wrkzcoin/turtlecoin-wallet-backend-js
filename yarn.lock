@@ -924,9 +924,9 @@ turtlecoin-crypto@^3.1.0:
     bindings "^1.5.0"
     nan "^2.14.0"
 
-turtlecoin-utils@turtlecoin/turtlecoin-utils#development:
+turtlecoin-utils@The-Cat-In-The-Hat/turtlecoin-utils#development:
   version "1.0.18"
-  resolved "https://codeload.github.com/turtlecoin/turtlecoin-utils/tar.gz/b64de7b9f0946ffb5af5e7223d2e5c5a1c17ec4b"
+  resolved "https://codeload.github.com/The-Cat-In-The-Hat/turtlecoin-utils/tar.gz/8f7248860bbe015447792f1f596cd2c8d7187347"
   dependencies:
     crc "^3.8.0"
     get-random-values "^1.2.0"
