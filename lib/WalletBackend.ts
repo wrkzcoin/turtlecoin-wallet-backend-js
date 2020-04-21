@@ -2674,7 +2674,7 @@ export class WalletBackend extends EventEmitter {
                 this.synced = true;
             }
 
-            if (this.shouldPerformAutoOptimize) {
+            if (this.shouldPerformAutoOptimize && this.autoOptimize) {
                 this.performAutoOptimize();
             }
         } else {
@@ -2736,7 +2736,7 @@ export class WalletBackend extends EventEmitter {
             }
         }
 
-        if (txData.transactionsToAdd.length > 0 && this.autoOptimize) {
+        if (txData.transactionsToAdd.length > 0) {
             this.shouldPerformAutoOptimize = true;
         }
     }
