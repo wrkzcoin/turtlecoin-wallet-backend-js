@@ -5,7 +5,7 @@
 // tslint:disable: max-line-length
 
 import { EventEmitter } from 'events';
-import { CreatedTransaction } from 'turtlecoin-utils';
+import { Address, Transaction as CreatedTransaction } from 'turtlecoin-utils';
 
 import * as fs from 'fs';
 import * as _ from 'lodash';
@@ -479,10 +479,12 @@ export class WalletBackend extends EventEmitter {
         assertNumber(scanHeight, 'scanHeight');
         assertString(mnemonicSeed, 'mnemonicSeed');
 
+        const merged = MergeConfig(config);
+
         let keys;
 
         try {
-            keys = CryptoUtils(MergeConfig(config)).createAddressFromMnemonic(mnemonicSeed);
+            keys = Address.fromMnemonic(mnemonicSeed, undefined, merged.addressPrefix);
         } catch (err) {
             return [undefined, new WalletError(WalletErrorCode.INVALID_MNEMONIC, err.toString())];
         }
@@ -499,7 +501,7 @@ export class WalletBackend extends EventEmitter {
         const newWallet: boolean = false;
 
         const wallet = new WalletBackend(
-            MergeConfig(config), daemon, keys.address, scanHeight, newWallet,
+            merged, daemon, keys.address, scanHeight, newWallet,
             keys.view.privateKey, keys.spend.privateKey,
         );
 
@@ -556,10 +558,12 @@ export class WalletBackend extends EventEmitter {
             return [undefined, new WalletError(WalletErrorCode.INVALID_KEY_FORMAT)];
         }
 
+        const merged = MergeConfig(config);
+
         let keys;
 
         try {
-            keys = CryptoUtils(MergeConfig(config)).createAddressFromKeys(privateSpendKey, privateViewKey);
+            keys = Address.fromKeys(privateSpendKey, privateViewKey, merged.addressPrefix);
         } catch (err) {
             return [undefined, new WalletError(WalletErrorCode.INVALID_KEY_FORMAT, err.toString())];
         }
@@ -576,7 +580,7 @@ export class WalletBackend extends EventEmitter {
         const newWallet: boolean = false;
 
         const wallet = new WalletBackend(
-            MergeConfig(config), daemon, keys.address, scanHeight, newWallet,
+            merged, daemon, keys.address, scanHeight, newWallet,
             keys.view.privateKey, keys.spend.privateKey,
         );
 
@@ -695,11 +699,13 @@ export class WalletBackend extends EventEmitter {
 
         const scanHeight: number = 0;
 
-        const keys = CryptoUtils(MergeConfig(config)).createNewAddress();
+        const merged = MergeConfig(config);
+
+        const address = Address.fromEntropy(undefined, undefined, merged.addressPrefix);
 
         const wallet = new WalletBackend(
-            MergeConfig(config), daemon, keys.address, scanHeight, newWallet,
-            keys.view.privateKey, keys.spend.privateKey,
+            merged, daemon, address.address, scanHeight, newWallet,
+            address.view.privateKey, address.spend.privateKey,
         );
 
         return wallet;
@@ -773,10 +779,10 @@ export class WalletBackend extends EventEmitter {
     private externalBlockProcessFunction?: (
         block: Block,
         privateViewKey: string,
-        spendKeys: Array<[string, string]>,
+        spendKeys: [string, string][],
         isViewWallet: boolean,
         processCoinbaseTransactions: boolean,
-    ) => Array<[string, TransactionInput]>;
+    ) => [string, TransactionInput][];
 
     /**
      * Whether we should automatically keep the wallet optimized
@@ -1072,7 +1078,7 @@ export class WalletBackend extends EventEmitter {
      *
      * Example:
      * ```javascript
-     * const [address, error] = wallet.addSubWallet();
+     * const [address, error] = await wallet.addSubWallet();
      *
      * if (!error) {
      *      console.log(`Created subwallet with address of ${address}`);
@@ -1081,7 +1087,7 @@ export class WalletBackend extends EventEmitter {
      *
      * @returns Returns the newly created address or an error.
      */
-    public addSubWallet(): ([string, undefined] | [undefined, WalletError]) {
+    public async addSubWallet(): Promise<([string, undefined] | [undefined, WalletError])> {
         logger.log(
             'Function addSubWallet called',
             LogLevel.DEBUG,
@@ -1139,7 +1145,7 @@ export class WalletBackend extends EventEmitter {
             return [undefined, new WalletError(WalletErrorCode.INVALID_KEY_FORMAT)];
         }
 
-        const [error, address] = this.subWallets.importSubWallet(privateSpendKey, scanHeight);
+        const [error, address] = await this.subWallets.importSubWallet(privateSpendKey, scanHeight);
 
         /* If the import height is lower than the current height then we need
          * to go back and rescan those blocks with the new subwallet. */
@@ -1202,7 +1208,7 @@ export class WalletBackend extends EventEmitter {
             return [undefined, new WalletError(WalletErrorCode.INVALID_KEY_FORMAT)];
         }
 
-        const [error, address] = this.subWallets.importViewSubWallet(publicSpendKey, scanHeight);
+        const [error, address] = await this.subWallets.importViewSubWallet(publicSpendKey, scanHeight);
 
         /* If the import height is lower than the current height then we need
          * to go back and rescan those blocks with the new subwallet. */
@@ -1476,10 +1482,10 @@ export class WalletBackend extends EventEmitter {
     public setBlockOutputProcessFunc(func: (
             block: Block,
             privateViewKey: string,
-            spendKeys: Array<[string, string]>,
+            spendKeys: [string, string][],
             isViewWallet: boolean,
             processCoinbaseTransactions: boolean,
-        ) => Array<[string, TransactionInput]>): void {
+        ) => [string, TransactionInput][]): void {
 
         logger.log(
             'Function setBlockOutputProcessFunc called',
@@ -1739,8 +1745,10 @@ export class WalletBackend extends EventEmitter {
             return [undefined, error];
         }
 
-        const parsedAddr = CryptoUtils(this.config).createAddressFromKeys(
-            privateSpendKey as string, privateViewKey as string,
+        const parsedAddr = Address.fromKeys(
+            privateSpendKey as string,
+            privateViewKey as string,
+            this.config.addressPrefix
         );
 
         if (!parsedAddr.mnemonic) {
@@ -2126,7 +2134,7 @@ export class WalletBackend extends EventEmitter {
      *                              Defaults to false.
      */
     public async sendTransactionAdvanced(
-        destinations: Array<[string, number]>,
+        destinations: [string, number][],
         mixin?: number,
         fee?: FeeType,
         paymentID?: string,
@@ -2313,9 +2321,9 @@ export class WalletBackend extends EventEmitter {
                     this.config,
                 );
 
-                if (res.success && res.rawTransaction) {
+                if (res.success && res.rawTransaction && res.rawTransaction.hash) {
                     res.transactionHash = res.rawTransaction.hash;
-                    this.preparedTransactions.delete(res.transactionHash);
+                    this.preparedTransactions.delete(res.transactionHash!);
                 }
 
                 return res;
@@ -2796,7 +2804,7 @@ export class WalletBackend extends EventEmitter {
             const processFunction = this.externalBlockProcessFunction
                                  || this.walletSynchronizer.processBlockOutputs.bind(this.walletSynchronizer);
 
-            const blockInputs: Array<[string, TransactionInput]> = await processFunction(
+            const blockInputs: [string, TransactionInput][] = await processFunction(
                 block,
                 this.subWallets.getPrivateViewKey(),
                 this.subWallets.getAllSpendKeys(),

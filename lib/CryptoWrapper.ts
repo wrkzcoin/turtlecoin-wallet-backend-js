@@ -2,8 +2,11 @@
 //
 // Please see the included LICENSE file for more information.
 
+import { Crypto } from 'turtlecoin-utils';
 import { CryptoUtils } from './CnUtils';
 import { Config } from './Config';
+
+const TurtleCoinCrypto = new Crypto();
 
 const nullKey = '0'.repeat(64);
 
@@ -17,7 +20,7 @@ export async function generateKeyDerivation(
     }
 
     try {
-        const key = await CryptoUtils(config).generateKeyDerivation(
+        const key = await TurtleCoinCrypto.generateKeyDerivation(
             transactionPublicKey,
             privateViewKey,
         );
@@ -56,7 +59,8 @@ export async function generateKeyImagePrimitive(
             publicSpendKey, privateSpendKey, outputIndex, derivation,
         );
 
-        return keys;
+        return [keys.keyImage, keys.privateEphemeral];
+
     } catch (err) {
         return [nullKey, nullKey];
     }
@@ -89,7 +93,7 @@ export async function underivePublicKey(
     }
 
     try {
-        const key = await CryptoUtils(config).underivePublicKey(
+        const key = await TurtleCoinCrypto.underivePublicKey(
             derivation, outputIndex, outputKey,
         );
 

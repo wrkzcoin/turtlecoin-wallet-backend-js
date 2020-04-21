@@ -9,7 +9,7 @@ import {
     DaemonType,
 } from '../lib/index';
 
-import { CryptoUtils } from '../lib/CnUtils';
+import { generateKeyDerivation, underivePublicKey } from '../lib/CryptoWrapper';
 
 const doPerformanceTests: boolean = process.argv.includes('--do-performance-tests');
 
@@ -34,7 +34,13 @@ class Tester {
 
         console.log(colors.yellow(`=== ${testDescription} ===`));
 
-        const success = await testFunc();
+        let success = false;
+
+        try {
+            success = await testFunc();
+        } catch (err) {
+            console.log(`Error executing test: ${err}`);
+        }
 
         this.totalTests++;
 
@@ -630,9 +636,10 @@ function roundTrip(
         await tester.test(async () => {
 
             /* Just random public + private keys */
-            const derivation: string = CryptoUtils(new Config()).generateKeyDerivation(
+            const derivation: string = await generateKeyDerivation(
                 'f235acd76ee38ec4f7d95123436200f9ed74f9eb291b1454fbc30742481be1ab',
                 '89df8c4d34af41a51cfae0267e8254cadd2298f9256439fa1cfa7e25ee606606',
+                new Config(),
             );
 
             const loopIterations: number = 6000;
@@ -641,9 +648,11 @@ function roundTrip(
 
             for (let i = 0; i < loopIterations; i++) {
                 /* Use i as output index to prevent optimization */
-                const derivedOutputKey = CryptoUtils(new Config()).underivePublicKey(
-                    derivation, i,
+                const derivedOutputKey = underivePublicKey(
+                    derivation,
+                    i,
                     '14897efad619205256d9170192e50e2fbd7959633e274d1b6f94b1087d680451',
+                    new Config(),
                 );
             }
 
@@ -668,9 +677,10 @@ function roundTrip(
 
             for (let i = 0; i < loopIterations; i++) {
                 /* Just random public + private keys */
-                const derivation: string = CryptoUtils(new Config()).generateKeyDerivation(
+                const derivation: string = await generateKeyDerivation(
                     'f235acd76ee38ec4f7d95123436200f9ed74f9eb291b1454fbc30742481be1ab',
                     '89df8c4d34af41a51cfae0267e8254cadd2298f9256439fa1cfa7e25ee606606',
+                    new Config(),
                 );
             }
 

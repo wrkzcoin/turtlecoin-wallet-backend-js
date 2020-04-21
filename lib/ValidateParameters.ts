@@ -3,6 +3,7 @@
 // Please see the included LICENSE file for more information.
 
 import * as _ from 'lodash';
+import { Address } from 'turtlecoin-utils';
 
 import { FeeType } from './FeeType';
 import { CryptoUtils} from './CnUtils';
@@ -44,13 +45,7 @@ export function validateAddresses(
                 return new WalletError(WalletErrorCode.ADDRESS_NOT_BASE58);
             }
 
-            /* Verify checksum */
-            const parsed = CryptoUtils(tempConfig).decodeAddress(address);
-
-            /* Verify the prefix is correct */
-            if (parsed.prefix !== tempConfig.addressPrefix) {
-                return new WalletError(WalletErrorCode.ADDRESS_WRONG_PREFIX);
-            }
+            const parsed = Address.fromAddress(address, tempConfig.addressPrefix);
 
             /* Verify it's not an integrated, if those aren't allowed */
             if (parsed.paymentId.length !== 0 && !integratedAddressesAllowed) {
@@ -92,7 +87,7 @@ export function validateAddress(
  * @hidden
  */
 export function validateDestinations(
-    destinations: Array<[string, number]>,
+    destinations: [string, number][],
     config: IConfig = new Config()): WalletError {
 
     const tempConfig: Config = MergeConfig(config);
@@ -133,7 +128,7 @@ export function validateDestinations(
  * @hidden
  */
 export function validateIntegratedAddresses(
-    destinations: Array<[string, number]>,
+    destinations: [string, number][],
     paymentID: string,
     config: IConfig = new Config()): WalletError {
 
@@ -145,7 +140,7 @@ export function validateIntegratedAddresses(
         }
 
         /* Extract the payment ID */
-        const parsedAddress = CryptoUtils(tempConfig).decodeAddress(destination);
+        const parsedAddress = Address.fromAddress(destination, tempConfig.addressPrefix);
 
         if (paymentID === '') {
             paymentID = parsedAddress.paymentId;
@@ -178,11 +173,11 @@ export function validateOurAddresses(
     }
 
     for (const address of addresses) {
-        const parsedAddress = CryptoUtils(tempConfig).decodeAddress(address);
+        const parsedAddress = Address.fromAddress(address, tempConfig.addressPrefix);
 
         const keys: string[] = subWallets.getPublicSpendKeys();
 
-        if (!keys.includes(parsedAddress.publicSpendKey)) {
+        if (!keys.includes(parsedAddress.spend.publicKey)) {
             return new WalletError(
                 WalletErrorCode.ADDRESS_NOT_IN_WALLET,
                 `The address given (${address}) does not exist in the wallet ` +
@@ -204,7 +199,7 @@ export function validateOurAddresses(
  * @hidden
  */
 export function validateAmount(
-    destinations: Array<[string, number]>,
+    destinations: [string, number][],
     fee: FeeType,
     subWalletsToTakeFrom: string[],
     subWallets: SubWallets,
