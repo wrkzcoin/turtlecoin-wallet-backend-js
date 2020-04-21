@@ -15,7 +15,7 @@ export function CryptoUtils(config: Config): CryptoNote {
     return new CryptoNote({
         addressPrefix: config.addressPrefix,
         checkRingSignatures: config.checkRingSignatures,
-        cnFastHash: config.cnFastHash,
+        cn_fast_hash: config.cnFastHash,
         coinUnitPlaces: config.decimalPlaces,
         derivePublicKey: config.derivePublicKey,
         deriveSecretKey: config.deriveSecretKey,
