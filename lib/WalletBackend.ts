@@ -5,7 +5,7 @@
 // tslint:disable: max-line-length
 
 import { EventEmitter } from 'events';
-import { Address, Transaction as CreatedTransaction } from 'turtlecoin-utils';
+import { Address, Crypto, Transaction as CreatedTransaction } from 'turtlecoin-utils';
 
 import * as fs from 'fs';
 import * as _ from 'lodash';
@@ -864,6 +864,14 @@ export class WalletBackend extends EventEmitter {
         this.setupEventHandlers();
 
         this.setupMetronomes();
+
+        if (!this.usingNativeCrypto()) {
+            logger.log(
+                'Wallet is not using native crypto. Syncing could be much slower than normal.',
+                LogLevel.WARNING,
+                LogCategory.GENERAL,
+            );
+        }
     }
 
     /**
@@ -1406,6 +1414,62 @@ export class WalletBackend extends EventEmitter {
 
         this.autoOptimize = shouldAutoOptimize;
     }
+
+    /**
+     * Returns a string indicating the type of cryptographic functions being used.
+     *
+     * Example:
+     * ```javascript
+     * const cryptoType = wallet.getCryptoType();
+     *
+     * console.log(`Wallet is using the ${cryptoType} cryptographic library.`);
+     * ```
+     */
+    public getCryptoType(): string {
+        logger.log(
+            'Function getCryptoType called',
+            LogLevel.DEBUG,
+            LogCategory.GENERAL,
+        );
+
+        return new Crypto().type;
+    }
+
+    /**
+     * Returns a boolean indicating whether or not the wallet is using native crypto
+     *
+     * Example:
+     * ```javascript
+     * const native = wallet.usingNativeCrypto();
+     *
+     * if (native) {
+     *     console.log('Wallet is using native cryptographic code.');
+     * }
+     * ```
+     */
+    public usingNativeCrypto(): boolean {
+        logger.log(
+            'Function usingNativeCrypto called',
+            LogLevel.DEBUG,
+            LogCategory.GENERAL,
+        );
+
+        switch (this.getCryptoType()) {
+            case 'c++':
+                return true;
+            case 'wasm':
+                return true;
+            case 'wasmjs':
+                return true;
+            case 'unknown':
+                return true;
+            case 'js':
+                return false;
+            default:
+                return false;
+        }
+    }
+
 
     /**
      * Sets a callback to be used instead of console.log for more fined control
