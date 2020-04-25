@@ -5,13 +5,7 @@
 // tslint:disable: max-line-length
 
 import { EventEmitter } from 'events';
-import {
-    Address,
-    Crypto,
-    Transaction as CreatedTransaction,
-    Transaction as UtilsTransaction,
-    Block as UtilsBlock
-} from 'wrkzcoin-utils';
+import { Address, Crypto, Transaction as CreatedTransaction } from 'wrkzcoin-utils';
 
 import * as fs from 'fs';
 import * as _ from 'lodash';
