@@ -8,7 +8,13 @@ import request = require('request-promise-native');
 
 import { EventEmitter } from 'events';
 
-import * as utils from 'turtlecoin-utils';
+import {
+    Block as UtilsBlock,
+    Transaction as UtilsTransaction,
+    TransactionOutputs,
+    TransactionInputs
+} from 'turtlecoin-utils';
+
 import * as http from 'http';
 import * as https from 'https';
 
@@ -24,11 +30,64 @@ import {
     RawTransaction, KeyOutput, KeyInput
 } from './Types';
 
+export declare interface Daemon {
+    /**
+     * This is emitted whenever the interface fails to contact the underlying daemon.
+     * This event will only be emitted on the first disconnection. It will not
+     * be emitted again, until the daemon connects, and then disconnects again.
+     *
+     * Example:
+     *
+     * ```javascript
+     * daemon.on('disconnect', (error) => {
+     *     console.log('Possibly lost connection to daemon: ' + error.toString());
+     * });
+     * ```
+     *
+     * @event
+     */
+    on(event: 'disconnect', callback: (error: Error) => void): this;
+
+    /**
+     * This is emitted whenever the interface previously failed to contact the
+     * underlying daemon, and has now reconnected.
+     * This event will only be emitted on the first connection. It will not
+     * be emitted again, until the daemon disconnects, and then reconnects again.
+     *
+     * Example:
+     *
+     * ```javascript
+     * daemon.on('connect', () => {
+     *     console.log('Regained connection to daemon!');
+     * });
+     * ```
+     *
+     * @event
+     */
+    on(event: 'connect', callback: () => void): this;
+
+    /**
+     * This is emitted whenever either the localDaemonBlockCount or the networkDaemonBlockCount
+     * changes.
+     *
+     * Example:
+     *
+     * ```javascript
+     * daemon.on('heightchange', (localDaemonBlockCount, networkDaemonBlockCount) => {
+     *     console.log(localDaemonBlockCount, networkDaemonBlockCount);
+     * });
+     *
+     * @event
+     */
+    on(event: 'heightchange',
+       callback: (localDaemonBlockCount: number, networkDaemonBlockCount: number) => void,
+    ): this;
+}
+
 /**
  * @noInheritDoc
  */
-export class Daemon extends EventEmitter implements IDaemon {
-
+export class Daemon extends EventEmitter {
     /**
      * Daemon/API host
      */
@@ -335,7 +394,11 @@ export class Daemon extends EventEmitter implements IDaemon {
 
             /* Daemon doesn't support /getrawblocks, full back to /getwalletsyncdata */
             if (err.statusCode === 404 && this.useRawBlocks) {
-                console.log('Disabling raw blocks');
+                logger.log(
+                    `Daemon responded 404 to /getrawblocks, reverting to /getwalletsyncdata`,
+                    LogLevel.INFO,
+                    [LogCategory.DAEMON],
+                );
 
                 this.useRawBlocks = false;
 
@@ -343,7 +406,6 @@ export class Daemon extends EventEmitter implements IDaemon {
                     blockHashCheckpoints,
                     startHeight,
                     startTimestamp,
-                    blockCount
                 );
             }
 
@@ -543,68 +605,87 @@ export class Daemon extends EventEmitter implements IDaemon {
         const result: Block[] = [];
 
         for (const rawBlock of rawBlocks) {
-            const block = new utils.Block(rawBlock.block);
+            const block = UtilsBlock.from(rawBlock.block, this.config);
+
+            this.emit('rawblock', block);
+            this.emit('rawtransaction', block.minerTransaction);
 
             let coinbaseTransaction: RawCoinbaseTransaction | undefined;
 
             if (this.config.scanCoinbaseTransactions) {
-                const rawCoinbase = new (utils as any).Transaction(block.parentBlock.minerTransaction);
-
                 const keyOutputs: KeyOutput[] = [];
 
-                for (const output of rawCoinbase.outputs) {
-                    keyOutputs.push(new KeyOutput(
-                        output.key,
-                        output.amount,
-                    ));
+                for (const output of block.minerTransaction.outputs) {
+                    if (output.type === TransactionOutputs.OutputType.KEY) {
+                        const o = output as TransactionOutputs.KeyOutput;
+
+                        keyOutputs.push(new KeyOutput(
+                            o.key,
+                            o.amount.toJSNumber(),
+                        ));
+                    }
                 }
 
                 coinbaseTransaction = new RawCoinbaseTransaction(
                     keyOutputs,
-                    rawCoinbase.hash,
-                    rawCoinbase.publicKey,
-                    rawCoinbase.paymentId,
+                    block.minerTransaction.hash,
+                    block.minerTransaction.publicKey!,
+                    block.minerTransaction.unlockTime > Number.MAX_SAFE_INTEGER
+                        ? (block.minerTransaction.unlockTime as any).toJSNumber()
+                        : block.minerTransaction.unlockTime,
                 );
             }
 
             const transactions: RawTransaction[] = [];
 
             for (const tx of rawBlock.transactions) {
-                const rawTX = new (utils as any).Transaction(tx);
+                const rawTX = UtilsTransaction.from(tx);
+
+                this.emit('rawtransaction', tx);
 
                 const keyOutputs: KeyOutput[] = [];
                 const keyInputs: KeyInput[] = [];
 
                 for (const output of rawTX.outputs) {
-                    keyOutputs.push(new KeyOutput(
-                        output.key,
-                        output.amount,
-                    ));
+                    if (output.type === TransactionOutputs.OutputType.KEY) {
+                        const o = output as TransactionOutputs.KeyOutput;
+
+                        keyOutputs.push(new KeyOutput(
+                            o.key,
+                            o.amount.toJSNumber(),
+                        ));
+                    }
                 }
 
                 for (const input of rawTX.inputs) {
-                    keyInputs.push(new KeyInput(
-                        input.amount,
-                        input.keyImage,
-                        input.outputIndexes,
-                    ));
+                    if (input.type === TransactionInputs.InputType.KEY) {
+                        const i = input as TransactionInputs.KeyInput;
+
+                        keyInputs.push(new KeyInput(
+                            i.amount.toJSNumber(),
+                            i.keyImage,
+                            i.keyOffsets.map((x) => x.toJSNumber()),
+                        ));
+                    }
                 }
 
                 transactions.push(new RawTransaction(
                     keyOutputs,
                     rawTX.hash,
-                    rawTX.publicKey,
-                    rawTX.unlockTime,
-                    rawTX.paymentId,
+                    rawTX.publicKey!,
+                    rawTX.unlockTime > Number.MAX_SAFE_INTEGER
+                        ? (rawTX.unlockTime as any).toJSNumber()
+                        : rawTX.unlockTime,
+                    rawTX.paymentId || '',
                     keyInputs,
                 ));
             }
 
             result.push(new Block(
                 transactions,
-                block.height as number,
+                block.height,
                 block.hash,
-                block.timestamp,
+                Math.floor(block.timestamp.getTime() / 1000),
                 coinbaseTransaction,
             ));
         }
