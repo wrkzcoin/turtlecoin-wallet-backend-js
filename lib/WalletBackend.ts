@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as _ from 'lodash';
 
 import { FeeType } from './FeeType';
-import { IDaemon } from './IDaemon';
+import { Daemon } from './Daemon';
 import { Metronome } from './Metronome';
 import { SubWallets } from './SubWallets';
 import { openWallet } from './OpenWallet';
@@ -307,7 +307,7 @@ export class WalletBackend extends EventEmitter {
      * @param password  The password to use to decrypt the wallet. May be blank.
      */
     public static openWalletFromFile(
-        daemon: IDaemon,
+        daemon: Daemon,
         filename: string,
         password: string,
         config?: IConfig): [WalletBackend, undefined] | [undefined, WalletError] {
@@ -360,7 +360,7 @@ export class WalletBackend extends EventEmitter {
      * @param password  The password to use to decrypt the wallet. May be blank.
      */
     public static openWalletFromEncryptedString(
-        deamon: IDaemon,
+        deamon: Daemon,
         data: string,
         password: string,
         config?: IConfig): [WalletBackend, undefined] | [undefined, WalletError] {
@@ -406,7 +406,7 @@ export class WalletBackend extends EventEmitter {
      * }
      * ```
      *
-     * @param daemon        An implementation of the IDaemon interface.
+     * @param daemon        An implementation of the Daemon interface.
      *
      * @param json          Wallet info encoded as a JSON encoded string. Note
      *                      that this should be a *string*, NOT a JSON object.
@@ -414,7 +414,7 @@ export class WalletBackend extends EventEmitter {
      *                      not do that yourself.
      */
     public static loadWalletFromJSON(
-        daemon: IDaemon,
+        daemon: Daemon,
         json: string,
         config?: IConfig): [WalletBackend, undefined] | [undefined, WalletError] {
 
@@ -456,7 +456,7 @@ export class WalletBackend extends EventEmitter {
      * }
      * ```
      *
-     * @param daemon        An implementation of the IDaemon interface.
+     * @param daemon        An implementation of the Daemon interface.
      *
      * @param scanHeight    The height to begin scanning the blockchain from.
      *                      This can greatly increase sync speeds if given.
@@ -465,7 +465,7 @@ export class WalletBackend extends EventEmitter {
      * @param mnemonicSeed  The mnemonic seed to import. Should be a 25 word string.
      */
     public static importWalletFromSeed(
-        daemon: IDaemon,
+        daemon: Daemon,
         scanHeight: number = 0,
         mnemonicSeed: string,
         config?: IConfig): [WalletBackend, undefined] | [undefined, WalletError] {
@@ -527,7 +527,7 @@ export class WalletBackend extends EventEmitter {
      * }
      * ```
      *
-     * @param daemon        An implementation of the IDaemon interface.
+     * @param daemon        An implementation of the Daemon interface.
      *
      * @param scanHeight    The height to begin scanning the blockchain from.
      *                      This can greatly increase sync speeds if given.
@@ -538,7 +538,7 @@ export class WalletBackend extends EventEmitter {
      * @param privateSpendKey   The private spend key to import. Should be a 64 char hex string.
      */
     public static importWalletFromKeys(
-        daemon: IDaemon,
+        daemon: Daemon,
         scanHeight: number = 0,
         privateViewKey: string,
         privateSpendKey: string,
@@ -612,7 +612,7 @@ export class WalletBackend extends EventEmitter {
      * }
      * ```
      *
-     * @param daemon        An implementation of the IDaemon interface.
+     * @param daemon        An implementation of the Daemon interface.
      *
      * @param scanHeight    The height to begin scanning the blockchain from.
      *                      This can greatly increase sync speeds if given.
@@ -622,7 +622,7 @@ export class WalletBackend extends EventEmitter {
      * @param address       The public address of this view wallet.
      */
     public static importViewWallet(
-        daemon: IDaemon,
+        daemon: Daemon,
         scanHeight: number = 0,
         privateViewKey: string,
         address: string,
@@ -683,10 +683,10 @@ export class WalletBackend extends EventEmitter {
      * const wallet = WB.WalletBackend.createWallet(daemon);
      * ```
      *
-     * @param daemon        An implementation of the IDaemon interface.
+     * @param daemon        An implementation of the Daemon interface.
      */
     public static createWallet(
-        daemon: IDaemon,
+        daemon: Daemon,
         config?: IConfig): WalletBackend {
 
         logger.log(
@@ -740,7 +740,7 @@ export class WalletBackend extends EventEmitter {
     /**
      * Interface to either a regular daemon or a blockchain cache api
      */
-    private daemon: IDaemon;
+    private daemon: Daemon;
 
     /**
      * Wallet synchronization state
@@ -830,7 +830,7 @@ export class WalletBackend extends EventEmitter {
      */
     private constructor(
         config: Config,
-        daemon: IDaemon,
+        daemon: Daemon,
         address: string,
         scanHeight: number,
         newWallet: boolean,
@@ -887,7 +887,7 @@ export class WalletBackend extends EventEmitter {
      * console.log(`Connected to ${daemonInfo.ssl ? 'https://' : 'http://'}${daemonInfo.host}:${daemonInfo.port}`);
      * ```
      */
-    public async swapNode(newDaemon: IDaemon): Promise<void> {
+    public async swapNode(newDaemon: Daemon): Promise<void> {
         logger.log(
             'Function swapNode called',
             LogLevel.DEBUG,
@@ -3034,7 +3034,7 @@ export class WalletBackend extends EventEmitter {
     /**
      * Initialize stuff not stored in the JSON.
      */
-    private initAfterLoad(daemon: IDaemon, config: Config): void {
+    private initAfterLoad(daemon: Daemon, config: Config): void {
         this.synced = false;
         this.started = false;
         this.autoOptimize = true;

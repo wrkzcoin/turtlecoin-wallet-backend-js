@@ -8,7 +8,7 @@ const sizeof = require('object-sizeof');
 import { EventEmitter } from 'events';
 
 import { Config } from './Config';
-import { IDaemon } from './IDaemon';
+import { Daemon } from './Daemon';
 import { SubWallets } from './SubWallets';
 import { delay, prettyPrintBytes } from './Utilities';
 import { LAST_KNOWN_BLOCK_HASHES_SIZE } from './Constants';
@@ -42,7 +42,7 @@ export class WalletSynchronizer extends EventEmitter {
     /**
      * The daemon instance to retrieve blocks from
      */
-    private daemon: IDaemon;
+    private daemon: Daemon;
 
     /**
      * The timestamp to start taking blocks from
@@ -100,7 +100,7 @@ export class WalletSynchronizer extends EventEmitter {
     private config: Config = new Config();
 
     constructor(
-        daemon: IDaemon,
+        daemon: Daemon,
         subWallets: SubWallets,
         startTimestamp: number,
         startHeight: number,
@@ -126,7 +126,7 @@ export class WalletSynchronizer extends EventEmitter {
     /**
      * Initialize things we can't initialize from the JSON
      */
-    public initAfterLoad(subWallets: SubWallets, daemon: IDaemon, config: Config): void {
+    public initAfterLoad(subWallets: SubWallets, daemon: Daemon, config: Config): void {
         this.subWallets = subWallets;
         this.daemon = daemon;
         this.storedBlocks = [];
