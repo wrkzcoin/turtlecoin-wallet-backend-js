@@ -5,7 +5,13 @@
 // tslint:disable: max-line-length
 
 import { EventEmitter } from 'events';
-import { Address, Crypto, Transaction as CreatedTransaction } from 'turtlecoin-utils';
+import {
+    Address,
+    Crypto,
+    Transaction as CreatedTransaction,
+    Transaction as UtilsTransaction,
+    Block as UtilsBlock
+} from 'turtlecoin-utils';
 
 import * as fs from 'fs';
 import * as _ from 'lodash';
@@ -270,6 +276,46 @@ export declare interface WalletBackend {
      * @event
      */
     on(event: 'deadnode', callback: () => void): this;
+
+    /**
+     * This is emitted every time we download a block from the daemon. Will
+     * only be emitted if the daemon is using /getrawblocks (All conventional/
+     * non blockchain cache daemons should support this). This block object
+     * is an instance of the [Block turtlecoin-utils class](https://utils.turtlecoin.dev/classes/block.html)
+     * See the Utils docs for further info on using this value.
+     * Note that a block emitted after a previous one could potentially have a lower
+     * height, if a blockchain fork took place.
+     *
+     * Example:
+     *
+     * ```javascript
+     * daemon.on('rawblock', (block) => {
+     *      console.log(`Downloaded new block ${block.hash}`);
+     * });
+     *
+     * @event
+     */
+    on(event: 'rawblock', callback: (block: UtilsBlock) => void): this;
+
+    /**
+     * This is emitted every time we download a transaction from the daemon. Will
+     * only be emitted if the daemon is using /getrawblocks (All conventional/
+     * non blockchain cache daemons should support this). This transaction object
+     * is an instance of the [Transaction turtlecoin-utils class](https://utils.turtlecoin.dev/classes/transaction.html)
+     * See the Utils docs for further info on using this value.
+     * Note that a transaction emitted after a previous one could potentially have a lower
+     * height in the chain, if a blockchain fork took place.
+     *
+     * Example:
+     *
+     * ```javascript
+     * daemon.on('rawtransaction', (block) => {
+     *      console.log(`Downloaded new transaction ${transaction.hash}`);
+     * });
+     *
+     * @event
+     */
+    on(event: 'rawtransaction', callback: (transaction: UtilsTransaction) => void): this;
 }
 
 /**
@@ -2989,6 +3035,14 @@ export class WalletBackend extends EventEmitter {
 
         this.daemon.on('connect', () => {
             this.emit('connect');
+        });
+
+        this.daemon.on('rawblock', (block) => {
+            this.emit('rawblock', block);
+        });
+
+        this.daemon.on('rawtransaction', (transaction) => {
+            this.emit('rawtransaction', transaction);
         });
 
         this.daemon.on('heightchange', (localDaemonBlockCount, networkDaemonBlockCount) => {
