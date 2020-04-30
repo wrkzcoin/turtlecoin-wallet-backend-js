@@ -11,7 +11,7 @@ import {
 
 import { Config } from './Config';
 import { FeeType } from './FeeType';
-import { IDaemon } from './IDaemon';
+import { Daemon } from './Daemon';
 import { CryptoUtils} from './CnUtils';
 import { SubWallets } from './SubWallets';
 
@@ -55,7 +55,7 @@ import { SUCCESS, WalletError, WalletErrorCode } from './WalletError';
  */
 export async function sendFusionTransactionBasic(
     config: Config,
-    daemon: IDaemon,
+    daemon: Daemon,
     subWallets: SubWallets): Promise<PreparedTransactionInfo> {
 
     return sendFusionTransactionAdvanced(
@@ -82,7 +82,7 @@ export async function sendFusionTransactionBasic(
  */
 export async function sendFusionTransactionAdvanced(
     config: Config,
-    daemon: IDaemon,
+    daemon: Daemon,
     subWallets: SubWallets,
     mixin?: number,
     subWalletsToTakeFrom?: string[],
@@ -355,7 +355,7 @@ export async function sendFusionTransactionAdvanced(
  */
 export async function sendTransactionBasic(
     config: Config,
-    daemon: IDaemon,
+    daemon: Daemon,
     subWallets: SubWallets,
     destination: string,
     amount: number,
@@ -412,7 +412,7 @@ export async function sendTransactionBasic(
  */
 export async function sendTransactionAdvanced(
     config: Config,
-    daemon: IDaemon,
+    daemon: Daemon,
     subWallets: SubWallets,
     addressesAndAmounts: [string, number][],
     mixin?: number,
@@ -948,7 +948,7 @@ async function tryMakeFeePerByteTransaction(
     addressesAndAmounts: [string, number][],
     changeAddress: string,
     mixin: number,
-    daemon: IDaemon,
+    daemon: Daemon,
     ourInputs: TxInputAndOwner[],
     paymentID: string,
     subWallets: SubWallets,
@@ -1100,7 +1100,7 @@ async function tryMakeFeePerByteTransaction(
 export async function sendPreparedTransaction(
     transaction: PreparedTransaction,
     subWallets: SubWallets,
-    daemon: IDaemon,
+    daemon: Daemon,
     config: Config): Promise<PreparedTransactionInfo> {
 
     const returnValue: PreparedTransactionInfo = {
@@ -1197,7 +1197,7 @@ async function makeTransaction(
     ourInputs: TxInputAndOwner[],
     destinations: Interfaces.GeneratedOutput[],
     subWallets: SubWallets,
-    daemon: IDaemon,
+    daemon: Daemon,
     config: Config): Promise<([CreatedTransaction, undefined]) | ([undefined, WalletError])> {
 
     ourInputs = _.sortBy(ourInputs, (input) => input.input.amount);
@@ -1300,7 +1300,7 @@ async function makeTransaction(
 function verifyTransaction(
     tx: CreatedTransaction,
     fee: FeeType,
-    daemon: IDaemon,
+    daemon: Daemon,
     config: Config): WalletError {
 
     logger.log(
@@ -1352,7 +1352,7 @@ async function relayTransaction(
     changeAddress: string,
     changeRequired: number,
     subWallets: SubWallets,
-    daemon: IDaemon,
+    daemon: Daemon,
     config: Config): Promise<[TX, undefined] | [undefined, WalletError]> {
 
     let relaySuccess: boolean;
@@ -1580,7 +1580,7 @@ function verifyTransactionFee(
 async function getRingParticipants(
     inputs: TxInputAndOwner[],
     mixin: number,
-    daemon: IDaemon,
+    daemon: Daemon,
     config: Config): Promise<WalletError | Interfaces.RandomOutput[][]> {
 
     if (mixin === 0) {

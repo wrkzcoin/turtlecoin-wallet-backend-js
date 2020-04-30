@@ -20,7 +20,6 @@ import * as https from 'https';
 
 import { assertString, assertNumber, assertBooleanOrUndefined } from './Assert';
 import { Config, IConfig, MergeConfig } from './Config';
-import { IDaemon } from './IDaemon';
 import { validateAddresses } from './ValidateParameters';
 import { LogCategory, logger, LogLevel } from './Logger';
 import { WalletError, WalletErrorCode } from './WalletError';

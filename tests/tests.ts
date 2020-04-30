@@ -3,7 +3,7 @@ import * as colors from 'colors';
 import * as fs from 'fs';
 
 import {
-    IDaemon, Daemon, prettyPrintAmount, SUCCESS, validateAddresses,
+    Daemon, prettyPrintAmount, SUCCESS, validateAddresses,
     WalletBackend, WalletError, WalletErrorCode, LogLevel,
     isValidMnemonic, isValidMnemonicWord, createIntegratedAddress, Config,
     DaemonType,
@@ -82,7 +82,7 @@ function delay(ms: number): Promise<void> {
 
 function encryptDecryptWallet(
     wallet: WalletBackend,
-    daemon: IDaemon,
+    daemon: Daemon,
     password: string): boolean {
         const encryptedString = wallet.encryptWalletToString(password);
         const [newWallet, error] = WalletBackend.openWalletFromEncryptedString(daemon, encryptedString, password);
@@ -96,7 +96,7 @@ function encryptDecryptWallet(
 
 function roundTrip(
     wallet: WalletBackend,
-    daemon: IDaemon,
+    daemon: Daemon,
     password: string): boolean {
 
     /* Save wallet to file */
@@ -125,7 +125,7 @@ function roundTrip(
     const tester: Tester = new Tester();
 
     /* Setup a daemon */
-    const daemon: IDaemon = new Daemon(daemonAddress, daemonPort);
+    const daemon: Daemon = new Daemon(daemonAddress, daemonPort);
 
     /* Begin testing */
     await tester.test(async () => {
@@ -479,13 +479,13 @@ function roundTrip(
        'isValidMnemonic doesn\'t work!');
 
     await tester.test(async () => {
-        const daemon2: IDaemon = new Daemon('127.0.0.1', 11898);
+        const daemon2: Daemon = new Daemon('127.0.0.1', 11898);
 
         const wallet = WalletBackend.createWallet(daemon2);
 
         await wallet.start();
 
-        const daemon3: IDaemon = new Daemon(daemonAddress, daemonPort);
+        const daemon3: Daemon = new Daemon(daemonAddress, daemonPort);
 
         await wallet.swapNode(daemon3);
 
@@ -507,7 +507,7 @@ function roundTrip(
        'swapNode doesn\'t work!');
 
     await tester.test(async () => {
-        const daemon2: IDaemon = new Daemon('this is not a valid host', 7777);
+        const daemon2: Daemon = new Daemon('this is not a valid host', 7777);
 
         let success: boolean = false;
 
@@ -517,7 +517,7 @@ function roundTrip(
 
         await daemon2.init();
 
-        const daemon3: IDaemon = new Daemon(daemonAddress, daemonPort);
+        const daemon3: Daemon = new Daemon(daemonAddress, daemonPort);
 
         daemon3.on('disconnect', (err) => {
             success = false;
@@ -606,7 +606,7 @@ function roundTrip(
     if (doPerformanceTests) {
         await tester.test(async () => {
             /* Reinit daemon so it has no leftover state */
-            const daemon2: IDaemon = new Daemon(daemonAddress, daemonPort);
+            const daemon2: Daemon = new Daemon(daemonAddress, daemonPort);
 
             const wallet = WalletBackend.createWallet(daemon2);
 
