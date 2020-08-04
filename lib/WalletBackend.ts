@@ -2503,6 +2503,44 @@ export class WalletBackend extends EventEmitter {
     }
 
     /**
+     * Deletes all prepared transactions.
+     *
+     * Example:
+     * ```javascript
+     * wallet.deletePreparedTransactions();
+     * ```
+     *
+     */
+    public deletePreparedTransactions(): void {
+        logger.log(
+            'Function deletePreparedTransactions called',
+            LogLevel.DEBUG,
+            LogCategory.GENERAL,
+        );
+
+        this.preparedTransactions.clear();
+    }
+
+    /**
+     * Gets all prepared transactions.
+     *
+     * Example:
+     * ```javascript
+     * const preparedTransactions = wallet.getPreparedTransactions();
+     * ```
+     *
+     */
+    public getPreparedTransactions(): PreparedTransaction[] {
+        logger.log(
+            'Function getPreparedTransactions called',
+            LogLevel.DEBUG,
+            LogCategory.GENERAL,
+        );
+
+        return Array.from(this.preparedTransactions.values());
+    }
+
+    /**
      * Get the unlocked and locked balance for the wallet container.
      *
      * Example:
