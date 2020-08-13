@@ -22,7 +22,7 @@ import { assertString, assertNumber, assertBooleanOrUndefined } from './Assert';
 import { Config, IConfig, MergeConfig } from './Config';
 import { validateAddresses } from './ValidateParameters';
 import { LogCategory, logger, LogLevel } from './Logger';
-import { WalletError, WalletErrorCode } from './WalletError';
+import { WalletErrorCode } from './WalletError';
 
 import {
     Block, TopBlock, DaemonType, DaemonConnection, RawCoinbaseTransaction,
@@ -43,7 +43,7 @@ export declare interface Daemon {
      * });
      * ```
      *
-     * @event
+     * @event This is emitted whenever the interface fails to contact the underlying daemon.
      */
     on(event: 'disconnect', callback: (error: Error) => void): this;
 
@@ -61,7 +61,7 @@ export declare interface Daemon {
      * });
      * ```
      *
-     * @event
+     * @event This is emitted whenever the interface previously failed to contact the underlying daemon, and has now reconnected.
      */
     on(event: 'connect', callback: () => void): this;
 
@@ -77,7 +77,7 @@ export declare interface Daemon {
      * });
      * ```
      *
-     * @event
+     * @event This is emitted whenever either the localDaemonBlockCount or the networkDaemonBlockCount changes
      */
     on(event: 'heightchange',
        callback: (localDaemonBlockCount: number, networkDaemonBlockCount: number) => void,
@@ -102,7 +102,7 @@ export declare interface Daemon {
      * });
      * ```
      *
-     * @event
+     * @event This is emitted every time we download a block from the daemon
      */
     on(event: 'rawblock', callback: (block: UtilsBlock) => void): this;
 
@@ -125,7 +125,7 @@ export declare interface Daemon {
      * });
      * ```
      *
-     * @event
+     * @event This is emitted every time we download a transaction from the daemon
      */
     on(event: 'rawtransaction', callback: (transaction: UtilsTransaction) => void): this;
 }
@@ -137,12 +137,12 @@ export class Daemon extends EventEmitter {
     /**
      * Daemon/API host
      */
-    private host: string;
+    private readonly host: string;
 
     /**
      * Daemon/API port
      */
-    private port: number;
+    private readonly port: number;
 
     /**
      * Whether we should use https for our requests
@@ -488,14 +488,14 @@ export class Daemon extends EventEmitter {
 
         if (data.synced && data.topBlock && data.topBlock.height && data.topBlock.hash) {
             if (this.useRawBlocks) {
-                return [this.rawBlocksToBlocks(data.items), data.topBlock];
+                return [await this.rawBlocksToBlocks(data.items), data.topBlock];
             } else {
                 return [data.items.map(Block.fromJSON), data.topBlock];
             }
         }
 
         if (this.useRawBlocks) {
-            return [this.rawBlocksToBlocks(data.items), true];
+            return [await this.rawBlocksToBlocks(data.items), true];
         } else {
             return [data.items.map(Block.fromJSON), true];
         }
@@ -607,7 +607,7 @@ export class Daemon extends EventEmitter {
             }
 
             /* Sort by output index to make it hard to determine real one */
-            outputs.push([output.amount, _.sortBy(indexes, ([index, key]) => index)]);
+            outputs.push([output.amount, _.sortBy(indexes, ([index]) => index)]);
         }
 
         return outputs;
@@ -647,11 +647,11 @@ export class Daemon extends EventEmitter {
         return this.host + ':' + this.port;
     }
 
-    private rawBlocksToBlocks(rawBlocks: any): Block[] {
+    private async rawBlocksToBlocks(rawBlocks: any): Promise<Block[]> {
         const result: Block[] = [];
 
         for (const rawBlock of rawBlocks) {
-            const block = UtilsBlock.from(rawBlock.block, this.config);
+            const block = await UtilsBlock.from(rawBlock.block, this.config);
 
             this.emit('rawblock', block);
             this.emit('rawtransaction', block.minerTransaction);
@@ -674,7 +674,7 @@ export class Daemon extends EventEmitter {
 
                 coinbaseTransaction = new RawCoinbaseTransaction(
                     keyOutputs,
-                    block.minerTransaction.hash,
+                    await block.minerTransaction.hash(),
                     block.minerTransaction.publicKey!,
                     block.minerTransaction.unlockTime > Number.MAX_SAFE_INTEGER
                         ? (block.minerTransaction.unlockTime as any).toJSNumber()
@@ -685,7 +685,7 @@ export class Daemon extends EventEmitter {
             const transactions: RawTransaction[] = [];
 
             for (const tx of rawBlock.transactions) {
-                const rawTX = UtilsTransaction.from(tx);
+                const rawTX = await UtilsTransaction.from(tx);
 
                 this.emit('rawtransaction', tx);
 
@@ -717,7 +717,7 @@ export class Daemon extends EventEmitter {
 
                 transactions.push(new RawTransaction(
                     keyOutputs,
-                    rawTX.hash,
+                    await rawTX.hash(),
                     rawTX.publicKey!,
                     rawTX.unlockTime > Number.MAX_SAFE_INTEGER
                         ? (rawTX.unlockTime as any).toJSNumber()
@@ -730,7 +730,7 @@ export class Daemon extends EventEmitter {
             result.push(new Block(
                 transactions,
                 block.height,
-                block.hash,
+                await block.hash(),
                 Math.floor(block.timestamp.getTime() / 1000),
                 coinbaseTransaction,
             ));
@@ -762,9 +762,9 @@ export class Daemon extends EventEmitter {
 
         const integratedAddressesAllowed: boolean = false;
 
-        const err: WalletErrorCode = validateAddresses(
+        const err: WalletErrorCode = (await validateAddresses(
             new Array(feeInfo.address), integratedAddressesAllowed, this.config,
-        ).errorCode;
+        )).errorCode;
 
         if (err !== WalletErrorCode.SUCCESS) {
             logger.log(

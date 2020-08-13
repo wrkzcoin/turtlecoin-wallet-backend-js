@@ -80,12 +80,12 @@ function delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function encryptDecryptWallet(
+async function encryptDecryptWallet(
     wallet: WalletBackend,
     daemon: Daemon,
-    password: string): boolean {
+    password: string): Promise<boolean> {
         const encryptedString = wallet.encryptWalletToString(password);
-        const [newWallet, error] = WalletBackend.openWalletFromEncryptedString(daemon, encryptedString, password);
+        const [newWallet, error] = await WalletBackend.openWalletFromEncryptedString(daemon, encryptedString, password);
 
         if (error) {
             return false;
@@ -94,10 +94,10 @@ function encryptDecryptWallet(
         return true;
     }
 
-function roundTrip(
+async function roundTrip(
     wallet: WalletBackend,
     daemon: Daemon,
-    password: string): boolean {
+    password: string): Promise<boolean> {
 
     /* Save wallet to file */
     if (!wallet.saveWalletToFile('tmp.wallet', password)) {
@@ -105,7 +105,7 @@ function roundTrip(
     }
 
     /* Check we can re-open saved file */
-    const [loadedWallet, error] = WalletBackend.openWalletFromFile(
+    const [loadedWallet, error] = await WalletBackend.openWalletFromFile(
         daemon, 'tmp.wallet', password,
     );
 
@@ -130,13 +130,13 @@ function roundTrip(
     /* Begin testing */
     await tester.test(async () => {
         /* Create a new wallet */
-        const wallet = WalletBackend.createWallet(daemon);
+        const wallet = await WalletBackend.createWallet(daemon);
 
         /* Convert the wallet to JSON */
         const initialJSON = JSON.stringify(wallet, null, 4);
 
         /* Load a new wallet from the dumped JSON */
-        const [loadedWallet, error] = WalletBackend.loadWalletFromJSON(daemon, initialJSON);
+        const [loadedWallet, error] = await WalletBackend.loadWalletFromJSON(daemon, initialJSON);
 
         /* Re-dump to JSON  */
         const finalJSON = JSON.stringify(loadedWallet, null, 4);
@@ -149,7 +149,7 @@ function roundTrip(
 
     await tester.test(async () => {
         /* Load a test file to check compatibility with C++ wallet backend */
-        const [testWallet, error] = WalletBackend.openWalletFromFile(
+        const [testWallet, error] = await WalletBackend.openWalletFromFile(
             daemon, './tests/test.wallet', 'password',
         );
 
@@ -161,7 +161,7 @@ function roundTrip(
 
     await tester.test(async () => {
         try {
-            const wallet = WalletBackend.createWallet(daemon);
+            const wallet = await WalletBackend.createWallet(daemon);
 
             if (!roundTrip(wallet, daemon, 'password')) {
                 return false;
@@ -185,35 +185,35 @@ function roundTrip(
        'Can\'t open saved file!');
 
     await tester.test(async () => {
-        const wallet = WalletBackend.createWallet(daemon);
+        const wallet = await WalletBackend.createWallet(daemon);
 
         /* Blank password */
-        const test1: boolean = roundTrip(
+        const test1: boolean = await roundTrip(
             wallet, daemon, '',
         );
 
         /* Nipponese */
-        const test2: boolean = roundTrip(
+        const test2: boolean = await roundTrip(
             wallet, daemon, 'お前はもう死んでいる',
         );
 
         /* A variety of unicode symbols, suggested by VMware */
-        const test3: boolean = roundTrip(
+        const test3: boolean = await roundTrip(
             wallet, daemon, '表ポあA鷗ŒéＢ逍Üßªąñ丂㐀𠀀',
         );
 
         /* Emojis */
-        const test4: boolean = roundTrip(
+        const test4: boolean = await roundTrip(
             wallet, daemon, '❤️ 💔 💌 💕 💞 💓 💗 💖 💘 💝 💟 💜 💛 💚 💙',
         );
 
         /* Right to left test */
-        const test5: boolean = roundTrip(
+        const test5: boolean = await roundTrip(
             wallet, daemon, 'בְּרֵאשִׁית, בָּרָא אֱלֹהִים, אֵת הַשָּׁמַיִם, וְאֵת הָאָרֶץ',
         );
 
         /* Cyrillic */
-        const test6: boolean = roundTrip(
+        const test6: boolean = await roundTrip(
             wallet, daemon, 'Дайте советов чтоли!',
         );
 
@@ -224,7 +224,7 @@ function roundTrip(
        'Special passwords do not work as expected!');
 
     await tester.test(async () => {
-        const wallet = WalletBackend.createWallet(daemon);
+        const wallet = await WalletBackend.createWallet(daemon);
 
         return encryptDecryptWallet(wallet, daemon, 'password');
     },  'Verifying wallet encryption and decryption work as expected',
@@ -232,7 +232,7 @@ function roundTrip(
         'Encrypt/Decrypt wallet does not work as expected!');
 
     await tester.test(async () => {
-        const [seedWallet, error] = WalletBackend.importWalletFromSeed(
+        const [seedWallet, error] = await WalletBackend.importWalletFromSeed(
             daemon, 0,
             'skulls woozy ouch summon gifts huts waffle ourselves obtains hexagon ' +
             'tadpoles hacksaw dormant hence abort listen history atom cadets stylishly ' +
@@ -250,13 +250,13 @@ function roundTrip(
        'Mnemonic seed wallet has incorrect keys!');
 
     await tester.test(async () => {
-        const [keyWallet, error] = WalletBackend.importWalletFromKeys(
+        const [keyWallet, error] = await WalletBackend.importWalletFromKeys(
             daemon, 0,
             '688e5229df6463ec4c27f6ee11c3f1d3d4b4d2480c0aabe64fb807182cfdc801',
             'd61a57a59318d70ff77cc7f8ad7f62887c828da1d5d3f3b0d2f7d3fa596c2904',
         );
 
-        const [seed, error2] = (keyWallet as WalletBackend).getMnemonicSeed();
+        const [seed, error2] = await (keyWallet as WalletBackend).getMnemonicSeed();
 
         return seed === 'skulls woozy ouch summon gifts huts waffle ourselves obtains ' +
                         'hexagon tadpoles hacksaw dormant hence abort listen history ' +
@@ -267,13 +267,13 @@ function roundTrip(
        'Deterministic key wallet has incorrect seed!');
 
     await tester.test(async () => {
-        const [keyWallet, error] = WalletBackend.importWalletFromKeys(
+        const [keyWallet, error] = await WalletBackend.importWalletFromKeys(
             daemon, 0,
             '1f3f6c220dd9f97619dbf44d967f79f3041b9b1c63da2c895f980f1411d5d704',
             '55e0aa4ca65c0ae016c7364eec313f56fc162901ead0e38a9f846686ac78560f',
         );
 
-        const [seed, err] = (keyWallet as WalletBackend).getMnemonicSeed();
+        const [seed, err] = await (keyWallet as WalletBackend).getMnemonicSeed();
 
         return (err as WalletError).errorCode === WalletErrorCode.KEYS_NOT_DETERMINISTIC;
 
@@ -282,7 +282,7 @@ function roundTrip(
        'Non deterministic wallet has seed!');
 
     await tester.test(async () => {
-        const [viewWallet, error] = WalletBackend.importViewWallet(
+        const [viewWallet, error] = await WalletBackend.importViewWallet(
             daemon, 0,
             '3c6cfe7a29a371278abd9f5725a3d2af5eb73d88b4ed9b8d6c2ff993bbc4c20a',
             'TRTLuybJFCU8BjP18bH3VZCNAu1fZ2r3d85SsU2w3VnJAHoRfnzLKgtTK2b58nfwDu59hKxwVuSMhTN31gmUW8nN9aoAN9N8Qyb',
@@ -297,7 +297,7 @@ function roundTrip(
        'View wallet has private spend key!');
 
     await tester.test(async () => {
-        const [seedWallet, error] = WalletBackend.importWalletFromSeed(
+        const [seedWallet, error] = await WalletBackend.importWalletFromSeed(
             daemon, 0,
             'skulls woozy ouch summon gifts huts waffle ourselves obtains hexagon ' +
             'tadpoles hacksaw dormant hence abort listen history atom cadets stylishly ' +
@@ -326,14 +326,14 @@ function roundTrip(
 
     await tester.test(async () => {
         /* Create a new wallet */
-        const wallet = WalletBackend.createWallet(daemon);
+        const wallet = await WalletBackend.createWallet(daemon);
 
-        const [seed, err1] = wallet.getMnemonicSeedForAddress('');
+        const [seed, err1] = await wallet.getMnemonicSeedForAddress('');
 
         /* Verify invalid address is detected */
         const test1: boolean = (err1 as WalletError).errorCode === WalletErrorCode.ADDRESS_WRONG_LENGTH;
 
-        const [seed2, err2] = wallet.getMnemonicSeedForAddress(
+        const [seed2, err2] = await wallet.getMnemonicSeedForAddress(
             'TRTLv1s9JQeHAJFoHvcqVBPyHYom2ynKeK6dpYptbp8gQNzdzE73ZD' +
             'kNmNurqfhhcMSUXpS1ZGEJKiKJUcPCyw7vYaCc354DCN1',
         );
@@ -342,7 +342,7 @@ function roundTrip(
         const test2: boolean = _.isEqual(err2, new WalletError(WalletErrorCode.ADDRESS_NOT_IN_WALLET));
 
         /* Should get a seed back when we supply our address */
-        const test3: boolean = wallet.getMnemonicSeedForAddress(wallet.getPrimaryAddress())[0] !== undefined;
+        const test3: boolean = (await wallet.getMnemonicSeedForAddress(wallet.getPrimaryAddress()))[0] !== undefined;
 
         /* TODO: Add a test for testing a new subwallet address, when we add
            subwallet creation */
@@ -354,7 +354,7 @@ function roundTrip(
        'getMnemonicSeedForAddress doesn\'t work!');
 
     await tester.test(async () => {
-        const wallet = WalletBackend.createWallet(daemon);
+        const wallet = await WalletBackend.createWallet(daemon);
 
         /* Not called wallet.start(), so node fee should be unset here */
         const [feeAddress, feeAmount] = wallet.getNodeFee();
@@ -366,11 +366,11 @@ function roundTrip(
        'getNodeFee doesn\'t work!');
 
     await tester.test(async () => {
-        const wallet = WalletBackend.createWallet(daemon);
+        const wallet = await WalletBackend.createWallet(daemon);
 
         const address: string = wallet.getPrimaryAddress();
 
-        const err: WalletError = validateAddresses([address], false);
+        const err: WalletError = await validateAddresses([address], false);
 
         return _.isEqual(err, SUCCESS);
 
@@ -381,7 +381,7 @@ function roundTrip(
     await tester.test(async () => {
         const privateViewKey: string = '3c6cfe7a29a371278abd9f5725a3d2af5eb73d88b4ed9b8d6c2ff993bbc4c20a';
 
-        const [viewWallet, error] = WalletBackend.importViewWallet(
+        const [viewWallet, error] = await WalletBackend.importViewWallet(
             daemon, 0,
             privateViewKey,
             'TRTLuybJFCU8BjP18bH3VZCNAu1fZ2r3d85SsU2w3VnJAHoRfnzLKgtTK2b58nfwDu59hKxwVuSMhTN31gmUW8nN9aoAN9N8Qyb',
@@ -394,7 +394,7 @@ function roundTrip(
        'getPrivateViewKey doesn\'t work!');
 
     await tester.test(async () => {
-        const [keyWallet, error] = WalletBackend.importWalletFromKeys(
+        const [keyWallet, error] = await WalletBackend.importWalletFromKeys(
             daemon, 0,
             '1f3f6c220dd9f97619dbf44d967f79f3041b9b1c63da2c895f980f1411d5d704',
             '55e0aa4ca65c0ae016c7364eec313f56fc162901ead0e38a9f846686ac78560f',
@@ -403,7 +403,7 @@ function roundTrip(
         const wallet = keyWallet as WalletBackend;
 
         const [publicSpendKey, privateSpendKey, error2]
-            = wallet.getSpendKeys(wallet.getPrimaryAddress());
+            = await wallet.getSpendKeys(wallet.getPrimaryAddress());
 
         return publicSpendKey === 'ff9b6e048297ee435d6219005974c2c8df620a4aca9ca5c4e13f071823482029' &&
                privateSpendKey === '55e0aa4ca65c0ae016c7364eec313f56fc162901ead0e38a9f846686ac78560f';
@@ -415,7 +415,7 @@ function roundTrip(
     await tester.test(async () => {
         let address;
         try {
-        address = createIntegratedAddress(
+        address = await createIntegratedAddress(
             'TRTLv2Fyavy8CXG8BPEbNeCHFZ1fuDCYCZ3vW5H5LXN4K2M2MHUpTENip9bbavpHvvPwb4NDkBWrNgURAd5DB38FHXWZyoBh4wW',
             'b23df6e84c1dd619d3601a28e5948d92a0d096aea1621969c591a90e986794a0',
         );
@@ -428,7 +428,7 @@ function roundTrip(
         let test2: boolean = false;
 
         try {
-            createIntegratedAddress('TRTLv2Fyavy8CXG8BPEbNeCHFZ1fuDCYCZ3vW5H5LXN4K2M2MHUpTENip9bbavpHvvPwb4NDkBWrNgURAd5DB38FHXWZyoBh4wW', '');
+            await createIntegratedAddress('TRTLv2Fyavy8CXG8BPEbNeCHFZ1fuDCYCZ3vW5H5LXN4K2M2MHUpTENip9bbavpHvvPwb4NDkBWrNgURAd5DB38FHXWZyoBh4wW', '');
         } catch (err) {
             test2 = true;
         }
@@ -436,7 +436,7 @@ function roundTrip(
         let test3: boolean = false;
 
         try {
-            createIntegratedAddress('', 'b23df6e84c1dd619d3601a28e5948d92a0d096aea1621969c591a90e986794a0');
+            await createIntegratedAddress('', 'b23df6e84c1dd619d3601a28e5948d92a0d096aea1621969c591a90e986794a0');
         } catch (err) {
             test3 = true;
         }
@@ -448,7 +448,7 @@ function roundTrip(
        'createIntegratedAddress doesn\'t work!');
 
     await tester.test(async () => {
-        const [keyWallet, error] = WalletBackend.importWalletFromKeys(
+        const [keyWallet, error] = await WalletBackend.importWalletFromKeys(
             daemon, 0,
             '1f3f6c220dd9f97619dbf44d967f79f3041b9b1c63da2c895f980f1411d5d704',
             '55e0aa4ca65c0ae016c7364eec313f56fc162901ead0e38a9f846686ac78560f', {
@@ -467,10 +467,10 @@ function roundTrip(
     await tester.test(async () => {
         const test1: boolean = !isValidMnemonicWord('aaaaa');
         const test2: boolean = isValidMnemonicWord('abbey');
-        const test3: boolean = isValidMnemonic('nugget lazy gang sonic vulture exit veteran poverty affair ringing opus soapy sonic afield dating lectures worry tuxedo ruffled rated locker bested aunt bifocals opus')[0];
-        const test4: boolean = !isValidMnemonic('')[0];
-        const test5: boolean = !isValidMnemonic('nugget lazy gang sonic vulture exit veteran poverty affair ringing opus soapy sonic afield dating lectures worry tuxedo ruffled rated locker bested aunt bifocals soapy')[0];
-        const test6: boolean = !isValidMnemonic('a lazy gang sonic vulture exit veteran poverty affair ringing opus soapy sonic afield dating lectures worry tuxedo ruffled rated locker bested aunt bifocals opus')[0];
+        const test3: boolean = (await isValidMnemonic('nugget lazy gang sonic vulture exit veteran poverty affair ringing opus soapy sonic afield dating lectures worry tuxedo ruffled rated locker bested aunt bifocals opus'))[0];
+        const test4: boolean = !(await isValidMnemonic(''))[0];
+        const test5: boolean = !(await isValidMnemonic('nugget lazy gang sonic vulture exit veteran poverty affair ringing opus soapy sonic afield dating lectures worry tuxedo ruffled rated locker bested aunt bifocals soapy'))[0];
+        const test6: boolean = !(await isValidMnemonic('a lazy gang sonic vulture exit veteran poverty affair ringing opus soapy sonic afield dating lectures worry tuxedo ruffled rated locker bested aunt bifocals opus'))[0];
 
         return test1 && test2 && test3 && test4 && test5 && test6;
 
@@ -481,7 +481,7 @@ function roundTrip(
     await tester.test(async () => {
         const daemon2: Daemon = new Daemon('127.0.0.1', 11898);
 
-        const wallet = WalletBackend.createWallet(daemon2);
+        const wallet = await WalletBackend.createWallet(daemon2);
 
         await wallet.start();
 
@@ -533,23 +533,23 @@ function roundTrip(
 
     await tester.test(async () => {
         /* Load a test file to check compatibility with C++ wallet backend */
-        const [testWallet, error] = WalletBackend.openWalletFromFile(
+        const [testWallet, error] = await WalletBackend.openWalletFromFile(
             daemon, './tests/test.wallet', 'password',
         );
 
         const wallet = testWallet as WalletBackend;
 
-        const a = wallet.getNumTransactions() === 3;
+        const a = await wallet.getNumTransactions() === 3;
 
-        let [ unlockedBalance, lockedBalance ] = wallet.getBalance();
+        let [ unlockedBalance, lockedBalance ] = await wallet.getBalance();
 
         const c = unlockedBalance === 246 && lockedBalance === 167;
 
         await wallet.rewind(1026200);
 
-        const b = wallet.getNumTransactions() === 1;
+        const b = await wallet.getNumTransactions() === 1;
 
-        [ unlockedBalance, lockedBalance ] = wallet.getBalance();
+        [ unlockedBalance, lockedBalance ] = await wallet.getBalance();
 
         const d = unlockedBalance === 1234 && lockedBalance === 0;
 
@@ -560,7 +560,7 @@ function roundTrip(
        'Rewind failed');
 
     await tester.test(async () => {
-        const [keyWallet, error] = WalletBackend.importWalletFromKeys(
+        const [keyWallet, error] = await WalletBackend.importWalletFromKeys(
             daemon, 0,
             '1f3f6c220dd9f97619dbf44d967f79f3041b9b1c63da2c895f980f1411d5d704',
             '55e0aa4ca65c0ae016c7364eec313f56fc162901ead0e38a9f846686ac78560f',
@@ -585,12 +585,12 @@ function roundTrip(
        'Subwallet tests don\'t work!');
 
     await tester.test(async () => {
-        const wallet = WalletBackend.createWallet(daemon);
+        const wallet = await WalletBackend.createWallet(daemon);
 
         let success = true;
 
         for (let i = 2; i < 10; i++) {
-            wallet.addSubWallet();
+            await wallet.addSubWallet();
 
             if (wallet.getWalletCount() !== i) {
                 success = false;
@@ -608,7 +608,7 @@ function roundTrip(
             /* Reinit daemon so it has no leftover state */
             const daemon2: Daemon = new Daemon(daemonAddress, daemonPort);
 
-            const wallet = WalletBackend.createWallet(daemon2);
+            const wallet = await WalletBackend.createWallet(daemon2);
 
             /* Not started sync, all should be zero */
             const [a, b, c] = wallet.getSyncStatus();
@@ -620,7 +620,7 @@ function roundTrip(
             /* Wait 5 seconds */
             await delay(1000 * 5);
 
-            wallet.stop();
+            await wallet.stop();
 
             /* Started sync, some should be non zero */
             const [d, e, f] = wallet.getSyncStatus();
@@ -699,7 +699,7 @@ function roundTrip(
            'generateKeyDerivation performance test failed!');
 
         await tester.test(async () => {
-            const [walletTmp, error] = WalletBackend.importWalletFromSeed(
+            const [walletTmp, error] = await WalletBackend.importWalletFromSeed(
                 daemon, 0,
                 'skulls woozy ouch summon gifts huts waffle ourselves obtains hexagon ' +
                 'tadpoles hacksaw dormant hence abort listen history atom cadets stylishly ' +

@@ -14,15 +14,16 @@ import { Config } from './Config';
 export function CryptoUtils(config: Config): CryptoNote {
     return new CryptoNote({
         addressPrefix: config.addressPrefix,
-        checkRingSignatures: config.checkRingSignatures,
-        cn_fast_hash: config.cnFastHash,
         coinUnitPlaces: config.decimalPlaces,
+        keccakIterations: 1,
+    }, {
+        cn_fast_hash: config.cnFastHash,
+        checkRingSignatures: config.checkRingSignatures,
         derivePublicKey: config.derivePublicKey,
         deriveSecretKey: config.deriveSecretKey,
         generateKeyDerivation: config.generateKeyDerivation,
         generateKeyImage: config.generateKeyImage,
         generateRingSignatures: config.generateRingSignatures,
-        keccakIterations: 1,
         secretKeyToPublicKey: config.secretKeyToPublicKey,
         underivePublicKey: config.underivePublicKey,
     });
