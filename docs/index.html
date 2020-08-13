@@ -102,56 +102,56 @@
 				<a href="#javascript" id="javascript" style="color: inherit; text-decoration: none;">
 					<h3>Javascript</h3>
 				</a>
-				<pre><code class="language-javascript"><span class="hljs-keyword">const</span> WB = <span class="hljs-built_in">require</span>(<span class="hljs-string">'turtlecoin-wallet-backend'</span>);
+				<pre><code class="language-javascript"><span class="hljs-keyword">const</span> WB = <span class="hljs-built_in">require</span>(<span class="hljs-string">&#x27;turtlecoin-wallet-backend&#x27;</span>);
 
-<span class="hljs-function">(<span class="hljs-params"><span class="hljs-keyword">async</span> (</span>) =&gt;</span> {
-    <span class="hljs-keyword">const</span> daemon = <span class="hljs-keyword">new</span> WB.Daemon(<span class="hljs-string">'127.0.0.1'</span>, <span class="hljs-number">11898</span>);
+(<span class="hljs-keyword">async</span> () =&gt; {
+    <span class="hljs-keyword">const</span> daemon = <span class="hljs-keyword">new</span> WB.Daemon(<span class="hljs-string">&#x27;127.0.0.1&#x27;</span>, <span class="hljs-number">11898</span>);
     <span class="hljs-comment">/* OR
-    const daemon = new WB.Daemon('blockapi.turtlepay.io', 443);
+    const daemon = new WB.Daemon(&#x27;blockapi.turtlepay.io&#x27;, 443);
     */</span>
 
     <span class="hljs-keyword">const</span> wallet = WB.WalletBackend.createWallet(daemon);
 
-    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Created wallet'</span>);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Created wallet&#x27;</span>);
 
     <span class="hljs-keyword">await</span> wallet.start();
 
-    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Started wallet'</span>);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Started wallet&#x27;</span>);
 
-    wallet.saveWalletToFile(<span class="hljs-string">'mywallet.wallet'</span>, <span class="hljs-string">'hunter2'</span>);
+    wallet.saveWalletToFile(<span class="hljs-string">&#x27;mywallet.wallet&#x27;</span>, <span class="hljs-string">&#x27;hunter2&#x27;</span>);
 
     <span class="hljs-comment">/* Make sure to call stop to let the node process exit */</span>
     wallet.stop();
 })().catch(<span class="hljs-function"><span class="hljs-params">err</span> =&gt;</span> {
-    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Caught promise rejection: '</span> + err);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Caught promise rejection: &#x27;</span> + err);
 });</code></pre>
 				<a href="#typescript" id="typescript" style="color: inherit; text-decoration: none;">
 					<h3>Typescript</h3>
 				</a>
-				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { WalletBackend, Daemon, IDaemon } <span class="hljs-keyword">from</span> <span class="hljs-string">'turtlecoin-wallet-backend'</span>;
+				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { WalletBackend, Daemon, IDaemon } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;turtlecoin-wallet-backend&#x27;</span>;
 
-<span class="hljs-function">(<span class="hljs-params"><span class="hljs-keyword">async</span> (<span class="hljs-params"></span>) =&gt; {
-    <span class="hljs-keyword">const</span> daemon: IDaemon = <span class="hljs-keyword">new</span> Daemon(<span class="hljs-params">'127.0.0.1', 11898</span>);
+(<span class="hljs-keyword">async</span> () =&gt; {
+    <span class="hljs-keyword">const</span> daemon: IDaemon = <span class="hljs-keyword">new</span> Daemon(<span class="hljs-string">&#x27;127.0.0.1&#x27;</span>, <span class="hljs-number">11898</span>);
 
     <span class="hljs-comment">/* OR
-    const daemon: IDaemon = new Daemon('blockapi.turtlepay.io', 443);
+    const daemon: IDaemon = new Daemon(&#x27;blockapi.turtlepay.io&#x27;, 443);
     */</span>
 
-    <span class="hljs-keyword">const</span> wallet: WalletBackend = WalletBackend.createWallet(<span class="hljs-params">daemon</span>);
+    <span class="hljs-keyword">const</span> wallet: WalletBackend = WalletBackend.createWallet(daemon);
 
-    <span class="hljs-built_in">console</span>.log(<span class="hljs-params">'Created wallet'</span>);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Created wallet&#x27;</span>);
 
-    <span class="hljs-keyword">await</span> wallet.start(<span class="hljs-params"></span>);
+    <span class="hljs-keyword">await</span> wallet.start();
 
-    <span class="hljs-built_in">console</span>.log(<span class="hljs-params">'Started wallet'</span>);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Started wallet&#x27;</span>);
 
-    wallet.saveWalletToFile(<span class="hljs-params">'mywallet.wallet', 'hunter2'</span>);
+    wallet.saveWalletToFile(<span class="hljs-string">&#x27;mywallet.wallet&#x27;</span>, <span class="hljs-string">&#x27;hunter2&#x27;</span>);
 
     <span class="hljs-comment">/* Make sure to call stop to let the node process exit */</span>
-    wallet.stop(<span class="hljs-params"></span>);
-}</span>)<span class="hljs-params">()</span>.<span class="hljs-params">catch</span>(<span class="hljs-params">err =&gt; {
-    <span class="hljs-built_in">console</span>.log(<span class="hljs-params">'Caught promise rejection: ' + err</span>);
-}</span>);</span></code></pre>
+    wallet.stop();
+})().catch(<span class="hljs-function"><span class="hljs-params">err</span> =&gt;</span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Caught promise rejection: &#x27;</span> + err);
+});</code></pre>
 				<a href="#configuration" id="configuration" style="color: inherit; text-decoration: none;">
 					<h2>Configuration</h2>
 				</a>
@@ -579,6 +579,5 @@
 </div>
 <div class="overlay"></div>
 <script src="assets/js/main.js"></script>
-<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
 </body>
 </html>

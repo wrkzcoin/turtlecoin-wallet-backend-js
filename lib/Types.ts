@@ -225,7 +225,7 @@ export class Transaction {
     public totalAmount(): number {
         let sum: number = 0;
 
-        for (const [publicKey, amount] of this.transfers) {
+        for (const [, amount] of this.transfers) {
             sum += amount;
         }
 
@@ -338,7 +338,7 @@ export class TransactionInput {
         spendHeight: number,
         unlockTime: number,
         parentTransactionHash: string,
-        privateEphemeral: string) {
+        privateEphemeral?: string) {
 
         this.keyImage = keyImage;
         this.amount = amount;
