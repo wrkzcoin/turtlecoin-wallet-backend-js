@@ -48,12 +48,11 @@ export class Block {
     public readonly blockTimestamp: number;
 
     constructor(
-        coinbaseTransaction: RawCoinbaseTransaction,
         transactions: RawTransaction[],
         blockHeight: number,
         blockHash: string,
-        blockTimestamp: number) {
-
+        blockTimestamp: number,
+        coinbaseTransaction?: RawCoinbaseTransaction) {
         this.coinbaseTransaction = coinbaseTransaction;
         this.transactions = transactions;
         this.blockHeight = blockHeight;
