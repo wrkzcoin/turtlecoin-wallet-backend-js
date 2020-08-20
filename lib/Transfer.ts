@@ -40,7 +40,8 @@ import {
 
 import {
     PRETTY_AMOUNTS, FUSION_TX_MIN_INPUT_COUNT,
-    FUSION_TX_MIN_IN_OUT_COUNT_RATIO, MAX_FUSION_TX_SIZE,
+    FUSION_TX_MIN_IN_OUT_COUNT_RATIO, MAX_FUSION_TX_SIZE, FUSION_FEE_V1,
+    FUSION_FEE_V1_HEIGHT, FUSION_ZERO_FEE_V2_HEIGHT
 } from './Constants';
 
 import { SUCCESS, WalletError, WalletErrorCode } from './WalletError';
@@ -171,9 +172,25 @@ export async function sendFusionTransactionAdvanced(
     const paymentID: string = '';
 
     /* Fusion transactions are free */
-    const fee: number = 0;
+    let fee: number = 0;
+
+    if (daemon.getNetworkBlockCount() >= FUSION_FEE_V1_HEIGHT && daemon.getNetworkBlockCount() < FUSION_ZERO_FEE_V2_HEIGHT) {
+        fee = FUSION_FEE_V1;
+    }
 
     let fusionTX: CreatedTransaction;
+
+    /* Not enough unspent inputs for a fusion TX, we're fully optimized */
+    if (fee > foundMoney) {
+        logger.log(
+            'Wallet is fully optimized, cancelling fusion transaction',
+            LogLevel.DEBUG,
+            LogCategory.TRANSACTIONS,
+        );
+
+        returnValue.error = new WalletError(WalletErrorCode.FULLY_OPTIMIZED);
+        return returnValue;
+    }
 
     while (true) {
         logger.log(
@@ -195,7 +212,7 @@ export async function sendFusionTransactionAdvanced(
         }
 
         /* Amount of the transaction */
-        const amount = _.sumBy(ourInputs, (input) => input.input.amount);
+        const amount = _.sumBy(ourInputs, (input) => input.input.amount) - fee;
 
         /* Number of outputs this transaction will create */
         const numOutputs = splitAmountIntoDenominations(amount).length;
