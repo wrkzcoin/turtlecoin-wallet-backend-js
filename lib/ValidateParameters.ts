@@ -6,7 +6,6 @@ import * as _ from 'lodash';
 import { Address } from 'turtlecoin-utils';
 
 import { FeeType } from './FeeType';
-import { CryptoUtils} from './CnUtils';
 import { SubWallets } from './SubWallets';
 import { SUCCESS, WalletError, WalletErrorCode } from './WalletError';
 
@@ -16,14 +15,15 @@ import { assertString, assertArray, assertBoolean } from './Assert';
 /**
  * @param addresses The addresses to validate
  * @param integratedAddressesAllowed Should we allow integrated addresses?
+ * @param config
  *
  * Verifies that the addresses given are valid.
  * @returns Returns SUCCESS if valid, otherwise a WalletError describing the error
  */
-export function validateAddresses(
+export async function validateAddresses(
     addresses: string[],
     integratedAddressesAllowed: boolean,
-    config: IConfig = new Config()): WalletError {
+    config: IConfig = new Config()): Promise<WalletError> {
 
     assertArray(addresses, 'addresses');
     assertBoolean(integratedAddressesAllowed, 'integratedAddressesAllowed');
@@ -45,7 +45,7 @@ export function validateAddresses(
                 return new WalletError(WalletErrorCode.ADDRESS_NOT_BASE58);
             }
 
-            const parsed = Address.fromAddress(address, tempConfig.addressPrefix);
+            const parsed = await Address.fromAddress(address, tempConfig.addressPrefix);
 
             /* Verify it's not an integrated, if those aren't allowed */
             if (parsed.paymentId.length !== 0 && !integratedAddressesAllowed) {
@@ -63,16 +63,17 @@ export function validateAddresses(
  * Verifies that the address given is valid.
  * @param address The address to validate.
  * @param integratedAddressAllowed Should an integrated address be allowed?
+ * @param config
  *
  * @returns Returns true if the address is valid, otherwise returns false
  *
  */
-export function validateAddress(
+export async function validateAddress(
     address: string,
     integratedAddressAllowed: boolean,
-    config?: IConfig): boolean {
+    config?: IConfig): Promise<boolean> {
 
-    const err: WalletError = validateAddresses(
+    const err: WalletError = await validateAddresses(
         new Array(address), integratedAddressAllowed, MergeConfig(config),
     );
 
@@ -86,9 +87,9 @@ export function validateAddress(
  *
  * @hidden
  */
-export function validateDestinations(
+export async function validateDestinations(
     destinations: [string, number][],
-    config: IConfig = new Config()): WalletError {
+    config: IConfig = new Config()): Promise<WalletError> {
 
     const tempConfig: Config = MergeConfig(config);
 
@@ -127,20 +128,20 @@ export function validateDestinations(
  *
  * @hidden
  */
-export function validateIntegratedAddresses(
+export async function validateIntegratedAddresses(
     destinations: [string, number][],
     paymentID: string,
-    config: IConfig = new Config()): WalletError {
+    config: IConfig = new Config()): Promise<WalletError> {
 
     const tempConfig: Config = MergeConfig(config);
 
-    for (const [destination, amount] of destinations) {
+    for (const [destination] of destinations) {
         if (destination.length !== tempConfig.integratedAddressLength) {
             continue;
         }
 
         /* Extract the payment ID */
-        const parsedAddress = Address.fromAddress(destination, tempConfig.addressPrefix);
+        const parsedAddress = await Address.fromAddress(destination, tempConfig.addressPrefix);
 
         if (paymentID === '') {
             paymentID = parsedAddress.paymentId;
@@ -159,21 +160,21 @@ export function validateIntegratedAddresses(
  *
  * @hidden
  */
-export function validateOurAddresses(
+export async function validateOurAddresses(
     addresses: string[],
     subWallets: SubWallets,
-    config: IConfig = new Config()): WalletError {
+    config: IConfig = new Config()): Promise<WalletError> {
 
     const tempConfig: Config = MergeConfig(config);
 
-    const error: WalletError = validateAddresses(addresses, false, tempConfig);
+    const error: WalletError = await validateAddresses(addresses, false, tempConfig);
 
     if (!_.isEqual(error, SUCCESS)) {
         return error;
     }
 
     for (const address of addresses) {
-        const parsedAddress = Address.fromAddress(address, tempConfig.addressPrefix);
+        const parsedAddress = await Address.fromAddress(address, tempConfig.addressPrefix);
 
         const keys: string[] = subWallets.getPublicSpendKeys();
 
@@ -198,13 +199,13 @@ export function validateOurAddresses(
  *
  * @hidden
  */
-export function validateAmount(
+export async function validateAmount(
     destinations: [string, number][],
     fee: FeeType,
     subWalletsToTakeFrom: string[],
     subWallets: SubWallets,
     currentHeight: number,
-    config: IConfig = new Config()): WalletError {
+    config: IConfig = new Config()): Promise<WalletError> {
 
     const tempConfig: Config = MergeConfig(config);
 
@@ -223,12 +224,12 @@ export function validateAmount(
     }
 
     /* Get available balance, given the source addresses */
-    const [availableBalance, lockedBalance] = subWallets.getBalance(
+    const [availableBalance] = await subWallets.getBalance(
         currentHeight, subWalletsToTakeFrom,
     );
 
     /* Get the sum of the transaction */
-    let totalAmount: number = _.sumBy(destinations, ([destination, amount]) => amount);
+    let totalAmount: number = _.sumBy(destinations, ([, amount]) => amount);
 
     /* Can only accurately calculate if we've got enough funds for the tx if
      * using a fixed fee. If using a fee per byte, we'll verify when constructing
