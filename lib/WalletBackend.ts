@@ -113,6 +113,7 @@ export declare interface WalletBackend {
      * });
      * ```
      *
+     *
      * @event This is emitted whenever the wallet finds an outgoing transaction.
      */
     on(event: 'outgoingtx', callback: (transaction: Transaction) => void): this;
@@ -2157,11 +2158,13 @@ export class WalletBackend extends EventEmitter {
      * @param subWalletsToTakeFrom  The addresses of the subwallets to draw funds from.
      * @param destination           The destination for the fusion transaction to be sent to.
      *                              Must be an address existing in this container.
+     * @param extraData             Extra arbitrary data to include in the transaction
      */
     public async sendFusionTransactionAdvanced(
         mixin?: number,
         subWalletsToTakeFrom?: string[],
-        destination?: string): Promise<SendTransactionResult> {
+        destination?: string,
+        extraData?: string): Promise<SendTransactionResult> {
 
         logger.log(
             'Function sendFusionTransactionAdvanced called',
@@ -2182,6 +2185,7 @@ export class WalletBackend extends EventEmitter {
                     mixin,
                     subWalletsToTakeFrom,
                     destination,
+                    extraData
                 );
             },
             true,
@@ -2300,6 +2304,7 @@ export class WalletBackend extends EventEmitter {
      *                              and address1 would get whatever remains of the balance
      *                              after paying node/network fees.
      *                              Defaults to false.
+     * @param extraData             Extra arbitrary data to include in the transaction
      */
     public async sendTransactionAdvanced(
         destinations: [string, number][],
@@ -2309,7 +2314,8 @@ export class WalletBackend extends EventEmitter {
         subWalletsToTakeFrom?: string[],
         changeAddress?: string,
         relayToNetwork?: boolean,
-        sendAll?: boolean): Promise<SendTransactionResult> {
+        sendAll?: boolean,
+        extraData?: string): Promise<SendTransactionResult> {
 
         logger.log(
             'Function sendTransactionAdvanced called',
@@ -2340,6 +2346,7 @@ export class WalletBackend extends EventEmitter {
                     changeAddress,
                     relayToNetwork,
                     sendAll,
+                    extraData
                 );
             },
             false,
