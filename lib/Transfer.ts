@@ -79,6 +79,7 @@ export async function sendFusionTransactionBasic(
  * @param subWalletsToTakeFrom  The addresses of the subwallets to draw funds from.
  * @param destination           The destination for the fusion transactions to be sent to.
  *                              Must be a subwallet in this container.
+ * @param extraData             Extra arbitrary data to include in the transaction
  *
  * @return Returns either [transaction, transaction hash, undefined], or [undefined, undefined, error]
  */
@@ -88,7 +89,8 @@ export async function sendFusionTransactionAdvanced(
     subWallets: SubWallets,
     mixin?: number,
     subWalletsToTakeFrom?: string[],
-    destination?: string): Promise<PreparedTransactionInfo> {
+    destination?: string,
+    extraData?: string): Promise<PreparedTransactionInfo> {
 
     logger.log(
         'Starting sendFusionTransaction process',
@@ -258,6 +260,7 @@ export async function sendFusionTransactionAdvanced(
             subWallets,
             daemon,
             config,
+            extraData
         );
 
         if (creationError || tx === undefined) {
@@ -431,6 +434,7 @@ export async function sendTransactionBasic(
  *                              and address1 would get whatever remains of the balance
  *                              after paying node/network fees.
  *                              Defaults to false.
+ * @param extraData             Extra arbitrary data to include in the transaction
  */
 export async function sendTransactionAdvanced(
     config: Config,
@@ -443,7 +447,8 @@ export async function sendTransactionAdvanced(
     subWalletsToTakeFrom?: string[],
     changeAddress?: string,
     relayToNetwork?: boolean,
-    sendAll?: boolean): Promise<PreparedTransactionInfo> {
+    sendAll?: boolean,
+    extraData?: string): Promise<PreparedTransactionInfo> {
 
     logger.log(
         'Starting sendTransaction process',
@@ -764,7 +769,7 @@ export async function sendTransactionAdvanced(
                         ourInputs,
                         paymentID,
                         subWallets,
-                        '',
+                        extraData,
                         sendAll,
                         config,
                     );
@@ -802,6 +807,7 @@ export async function sendTransactionAdvanced(
                     subWallets,
                     daemon,
                     config,
+                    extraData
                 );
 
                 const [tx, err] = txResult;
@@ -972,7 +978,7 @@ async function tryMakeFeePerByteTransaction(
     ourInputs: TxInputAndOwner[],
     paymentID: string,
     subWallets: SubWallets,
-    extraData: string,
+    extraData: string = '',
     sendAll: boolean,
     config: Config): Promise<[
         boolean,
@@ -1017,6 +1023,7 @@ async function tryMakeFeePerByteTransaction(
             subWallets,
             daemon,
             config,
+            extraData
         );
 
         const [ tx, creationError ] = result;
@@ -1223,7 +1230,8 @@ async function makeTransaction(
     destinations: Interfaces.GeneratedOutput[],
     subWallets: SubWallets,
     daemon: Daemon,
-    config: Config): Promise<([CreatedTransaction, undefined]) | ([undefined, WalletError])> {
+    config: Config,
+    extraData?: string): Promise<([CreatedTransaction, undefined]) | ([undefined, WalletError])> {
 
     ourInputs = _.sortBy(ourInputs, (input) => input.input.amount);
 
@@ -1301,7 +1309,7 @@ async function makeTransaction(
 
         const tx = await CryptoUtils(config).createTransaction(
             destinations, ourOutputs, randomOuts as Interfaces.RandomOutput[][], mixin, fee,
-            paymentID,
+            paymentID, undefined, extraData
         );
 
         logger.log(
