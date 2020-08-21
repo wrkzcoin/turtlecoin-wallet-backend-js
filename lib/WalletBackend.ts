@@ -839,12 +839,12 @@ export class WalletBackend extends EventEmitter {
     /**
      * Whether we should automatically keep the wallet optimized
      */
-    private autoOptimize: boolean = true;
+    private autoOptimize: boolean = false;
 
     /**
      * Should we perform auto optimization when next synced
      */
-    private shouldPerformAutoOptimize: boolean = true;
+    private shouldPerformAutoOptimize: boolean = false;
 
     /**
      * Are we in the middle of an optimization?
