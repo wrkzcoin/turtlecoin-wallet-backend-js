@@ -2,7 +2,7 @@
 //
 // Please see the included LICENSE file for more information.
 
-import { CreatedTransaction } from 'turtlecoin-utils';
+import { Transaction as CreatedTransaction } from 'turtlecoin-utils';
 
 import { WalletError } from './WalletError';
 
@@ -48,12 +48,11 @@ export class Block {
     public readonly blockTimestamp: number;
 
     constructor(
-        coinbaseTransaction: RawCoinbaseTransaction,
         transactions: RawTransaction[],
         blockHeight: number,
         blockHash: string,
-        blockTimestamp: number) {
-
+        blockTimestamp: number,
+        coinbaseTransaction?: RawCoinbaseTransaction) {
         this.coinbaseTransaction = coinbaseTransaction;
         this.transactions = transactions;
         this.blockHeight = blockHeight;
@@ -510,10 +509,10 @@ export class TransactionData {
     public transactionsToAdd: Transaction[] = [];
 
     /* Mapping of public spend key to inputs */
-    public inputsToAdd: Array<[string, TransactionInput]> = [];
+    public inputsToAdd: [string, TransactionInput][] = [];
 
     /* Mapping of public spend key to key image */
-    public keyImagesToMarkSpent: Array<[string, string]> = [];
+    public keyImagesToMarkSpent: [string, string][] = [];
 }
 
 /**

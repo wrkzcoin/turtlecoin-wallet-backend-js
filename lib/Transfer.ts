@@ -5,13 +5,13 @@
 import * as _ from 'lodash';
 
 import {
-    CreatedTransaction, DecodedAddress, Output, RandomOutput, Transaction,
-    TxDestination, Vout, Wallet,
+    Transaction as CreatedTransaction, TransactionOutputs,
+    Address, Interfaces,
 } from 'turtlecoin-utils';
 
 import { Config } from './Config';
 import { FeeType } from './FeeType';
-import { IDaemon } from './IDaemon';
+import { Daemon } from './Daemon';
 import { CryptoUtils} from './CnUtils';
 import { SubWallets } from './SubWallets';
 
@@ -40,7 +40,8 @@ import {
 
 import {
     PRETTY_AMOUNTS, FUSION_TX_MIN_INPUT_COUNT,
-    FUSION_TX_MIN_IN_OUT_COUNT_RATIO, MAX_FUSION_TX_SIZE,
+    FUSION_TX_MIN_IN_OUT_COUNT_RATIO, MAX_FUSION_TX_SIZE, FUSION_FEE_V1,
+    FUSION_FEE_V1_HEIGHT, FUSION_ZERO_FEE_V2_HEIGHT
 } from './Constants';
 
 import { SUCCESS, WalletError, WalletErrorCode } from './WalletError';
@@ -55,7 +56,7 @@ import { SUCCESS, WalletError, WalletErrorCode } from './WalletError';
  */
 export async function sendFusionTransactionBasic(
     config: Config,
-    daemon: IDaemon,
+    daemon: Daemon,
     subWallets: SubWallets): Promise<PreparedTransactionInfo> {
 
     return sendFusionTransactionAdvanced(
@@ -82,7 +83,7 @@ export async function sendFusionTransactionBasic(
  */
 export async function sendFusionTransactionAdvanced(
     config: Config,
-    daemon: IDaemon,
+    daemon: Daemon,
     subWallets: SubWallets,
     mixin?: number,
     subWalletsToTakeFrom?: string[],
@@ -171,9 +172,25 @@ export async function sendFusionTransactionAdvanced(
     const paymentID: string = '';
 
     /* Fusion transactions are free */
-    const fee: number = 0;
+    let fee: number = 0;
+
+    if (daemon.getNetworkBlockCount() >= FUSION_FEE_V1_HEIGHT && daemon.getNetworkBlockCount() < FUSION_ZERO_FEE_V2_HEIGHT) {
+        fee = FUSION_FEE_V1;
+    }
 
     let fusionTX: CreatedTransaction;
+
+    /* Not enough unspent inputs for a fusion TX, we're fully optimized */
+    if (fee > foundMoney) {
+        logger.log(
+            'Wallet is fully optimized, cancelling fusion transaction',
+            LogLevel.DEBUG,
+            LogCategory.TRANSACTIONS,
+        );
+
+        returnValue.error = new WalletError(WalletErrorCode.FULLY_OPTIMIZED);
+        return returnValue;
+    }
 
     while (true) {
         logger.log(
@@ -195,7 +212,7 @@ export async function sendFusionTransactionAdvanced(
         }
 
         /* Amount of the transaction */
-        const amount = _.sumBy(ourInputs, (input) => input.input.amount);
+        const amount = _.sumBy(ourInputs, (input) => input.input.amount) - fee;
 
         /* Number of outputs this transaction will create */
         const numOutputs = splitAmountIntoDenominations(amount).length;
@@ -222,7 +239,7 @@ export async function sendFusionTransactionAdvanced(
             continue;
         }
 
-        const addressesAndAmounts: Array<[string, number]> = [[destination, amount]];
+        const addressesAndAmounts: [string, number][] = [[destination, amount]];
 
         const destinations = setupDestinations(
             addressesAndAmounts,
@@ -253,8 +270,7 @@ export async function sendFusionTransactionAdvanced(
             return returnValue;
         }
 
-        /* Divided by two because it's represented as hex */
-        if (tx.rawTransaction.length / 2 > MAX_FUSION_TX_SIZE) {
+        if (tx.size > MAX_FUSION_TX_SIZE) {
             logger.log(
                 `Fusion tx is too large, decreasing number of inputs`,
                 LogLevel.DEBUG,
@@ -356,7 +372,7 @@ export async function sendFusionTransactionAdvanced(
  */
 export async function sendTransactionBasic(
     config: Config,
-    daemon: IDaemon,
+    daemon: Daemon,
     subWallets: SubWallets,
     destination: string,
     amount: number,
@@ -413,9 +429,9 @@ export async function sendTransactionBasic(
  */
 export async function sendTransactionAdvanced(
     config: Config,
-    daemon: IDaemon,
+    daemon: Daemon,
     subWallets: SubWallets,
-    addressesAndAmounts: Array<[string, number]>,
+    addressesAndAmounts: [string, number][],
     mixin?: number,
     fee?: FeeType,
     paymentID?: string,
@@ -548,22 +564,17 @@ export async function sendTransactionAdvanced(
     }
 
     for (let [address, amount] of addressesAndAmounts) {
-        const decoded: DecodedAddress = CryptoUtils(config).decodeAddress(address);
+        const decoded = Address.fromAddress(address, config.addressPrefix);
 
         /* Assign payment ID from integrated address if present */
         if (decoded.paymentId !== '') {
             paymentID = decoded.paymentId;
 
             /* Turn integrated address into standard address */
-            address = CryptoUtils(config).encodeAddress(
-                decoded.publicViewKey,
-                decoded.publicSpendKey,
-                undefined,
-                decoded.prefix as any, /* TODO, types are wrong */
-            );
+            address = Address.fromPublicKeys(decoded.spend.publicKey, decoded.view.publicKey, undefined, config.addressPrefix).toString();
 
             logger.log(
-                `Extracted payment ID of ${paymentID} from address ${address}, resulting non integrated address: ${address}`,
+                `Extracted payment ID of ${paymentID} from address ${decoded.address}, resulting non integrated address: ${address}`,
                 LogLevel.DEBUG,
                 LogCategory.TRANSACTIONS,
             );
@@ -782,7 +793,7 @@ export async function sendTransactionAdvanced(
                 txResult = await makeTransaction(
                     mixin,
                     fee.fixedFee,
-                    paymentID,
+                    paymentID as string,
                     ourInputs,
                     destinations,
                     subWallets,
@@ -803,7 +814,7 @@ export async function sendTransactionAdvanced(
                 }
 
                 const minFee: number = getMinimumTransactionFee(
-                    tx!.rawTransaction.length / 2 ,
+                    tx!.size,
                     daemon.getNetworkBlockCount(),
                     config,
                 );
@@ -864,7 +875,7 @@ export async function sendTransactionAdvanced(
         return returnValue;
     }
 
-    const actualFee: number = sumTransactionFee(createdTX.transaction);
+    const actualFee: number = sumTransactionFee(createdTX);
 
     logger.log(
         `Successfully created transaction, proceeding to validating and sending`,
@@ -873,7 +884,7 @@ export async function sendTransactionAdvanced(
     );
 
     logger.log(
-        `Created transaction: ${JSON.stringify(createdTX.transaction)}`,
+        `Created transaction: ${JSON.stringify(createdTX.toString())}`,
         LogLevel.TRACE,
         LogCategory.TRANSACTIONS,
     );
@@ -894,7 +905,7 @@ export async function sendTransactionAdvanced(
         const [prettyTX, err] = await relayTransaction(
             createdTX,
             actualFee,
-            paymentID,
+            paymentID as string,
             ourInputs,
             changeAddress,
             changeRequired,
@@ -951,10 +962,10 @@ async function tryMakeFeePerByteTransaction(
     amountPreFee: number,
     estimatedFee: number,
     feePerByte: number,
-    addressesAndAmounts: Array<[string, number]>,
+    addressesAndAmounts: [string, number][],
     changeAddress: string,
     mixin: number,
-    daemon: IDaemon,
+    daemon: Daemon,
     ourInputs: TxInputAndOwner[],
     paymentID: string,
     subWallets: SubWallets,
@@ -1017,7 +1028,7 @@ async function tryMakeFeePerByteTransaction(
             return [ true, result, 0, 0 ];
         }
 
-        const actualTxSize = tx!.rawTransaction.length / 2;
+        const actualTxSize = tx!.size;
 
         logger.log(
             `Size of generated transaction: ${prettyPrintBytes(actualTxSize)}`,
@@ -1106,7 +1117,7 @@ async function tryMakeFeePerByteTransaction(
 export async function sendPreparedTransaction(
     transaction: PreparedTransaction,
     subWallets: SubWallets,
-    daemon: IDaemon,
+    daemon: Daemon,
     config: Config): Promise<PreparedTransactionInfo> {
 
     const returnValue: PreparedTransactionInfo = {
@@ -1158,19 +1169,19 @@ export async function sendPreparedTransaction(
 }
 
 function setupDestinations(
-    addressesAndAmountsTmp: Array<[string, number]>,
+    addressesAndAmountsTmp: [string, number][],
     changeRequired: number,
     changeAddress: string,
-    config: Config): TxDestination[] {
+    config: Config): Interfaces.GeneratedOutput[] {
 
     /* Clone array so we don't manipulate it outside the function */
-    const addressesAndAmounts: Array<[string, number]> = addressesAndAmountsTmp.slice();
+    const addressesAndAmounts: [string, number][] = addressesAndAmountsTmp.slice();
 
     if (changeRequired !== 0) {
         addressesAndAmounts.push([changeAddress, changeRequired]);
     }
 
-    let amounts: Array<[string, number]> = [];
+    let amounts: [string, number][] = [];
 
     /* Split amounts into denominations */
     addressesAndAmounts.map(([address, amount]) => {
@@ -1189,11 +1200,9 @@ function setupDestinations(
 
     /* Prepare destinations keys */
     return amounts.map(([address, amount]) => {
-        const decoded: DecodedAddress = CryptoUtils(config).decodeAddress(address);
-
         return {
             amount: amount,
-            keys: decoded,
+            destination: Address.fromAddress(address, config.addressPrefix),
         };
     });
 }
@@ -1203,9 +1212,9 @@ async function makeTransaction(
     fee: number,
     paymentID: string,
     ourInputs: TxInputAndOwner[],
-    destinations: TxDestination[],
+    destinations: Interfaces.GeneratedOutput[],
     subWallets: SubWallets,
-    daemon: IDaemon,
+    daemon: Daemon,
     config: Config): Promise<([CreatedTransaction, undefined]) | ([undefined, WalletError])> {
 
     ourInputs = _.sortBy(ourInputs, (input) => input.input.amount);
@@ -1216,7 +1225,7 @@ async function makeTransaction(
         LogCategory.TRANSACTIONS,
     );
 
-    const randomOuts: WalletError | RandomOutput[][] = await getRingParticipants(
+    const randomOuts: WalletError | Interfaces.RandomOutput[][] = await getRingParticipants(
         ourInputs, mixin, daemon, config,
     );
 
@@ -1233,7 +1242,7 @@ async function makeTransaction(
     let numPregenerated = 0;
     let numGeneratedOnDemand = 0;
 
-    const ourOutputs: Output[] = await Promise.all(ourInputs.map(async (input) => {
+    const ourOutputs: Interfaces.Output[] = await Promise.all(ourInputs.map(async (input) => {
         if (typeof input.input.privateEphemeral !== 'string' || !isHex64(input.input.privateEphemeral)) {
             const [keyImage, tmpSecretKey] = await generateKeyImage(
                 input.input.transactionPublicKey,
@@ -1257,6 +1266,12 @@ async function makeTransaction(
             index: input.input.transactionIndex,
             input: {
                 privateEphemeral: input.input.privateEphemeral,
+                publicEphemeral: '', // Required by compiler, not used in func
+                transactionKeys: {
+                    derivedKey: '',
+                    outputIndex: 0,
+                    publicKey: '',
+                }, // again required by compiler but not used in func
             },
             key: input.input.key,
             keyImage: input.input.keyImage,
@@ -1276,8 +1291,8 @@ async function makeTransaction(
             LogCategory.TRANSACTIONS,
         );
 
-        const tx = await CryptoUtils(config).createTransactionAsync(
-            destinations, ourOutputs, randomOuts as RandomOutput[][], mixin, fee,
+        const tx = await CryptoUtils(config).createTransaction(
+            destinations, ourOutputs, randomOuts as Interfaces.RandomOutput[][], mixin, fee,
             paymentID,
         );
 
@@ -1302,7 +1317,7 @@ async function makeTransaction(
 function verifyTransaction(
     tx: CreatedTransaction,
     fee: FeeType,
-    daemon: IDaemon,
+    daemon: Daemon,
     config: Config): WalletError {
 
     logger.log(
@@ -1313,7 +1328,7 @@ function verifyTransaction(
 
     /* Check the transaction isn't too large to fit in a block */
     const tooBigErr: WalletError = isTransactionPayloadTooBig(
-        tx.rawTransaction, daemon.getNetworkBlockCount(), config,
+        tx.size, daemon.getNetworkBlockCount(), config,
     );
 
     if (!_.isEqual(tooBigErr, SUCCESS)) {
@@ -1328,7 +1343,7 @@ function verifyTransaction(
 
     /* Check all the output amounts are members of 'PRETTY_AMOUNTS', otherwise
        they will not be mixable */
-    if (!verifyAmounts(tx.transaction.outputs)) {
+    if (!verifyAmounts(tx.outputs)) {
         return new WalletError(WalletErrorCode.AMOUNTS_NOT_PRETTY);
     }
 
@@ -1339,7 +1354,7 @@ function verifyTransaction(
     );
 
     /* Check the transaction has the fee that we expect (0 for fusion) */
-    if (!verifyTransactionFee(tx, fee, sumTransactionFee(tx.transaction))) {
+    if (!verifyTransactionFee(tx.size, fee, sumTransactionFee(tx))) {
         return new WalletError(WalletErrorCode.UNEXPECTED_FEE);
     }
 
@@ -1354,7 +1369,7 @@ async function relayTransaction(
     changeAddress: string,
     changeRequired: number,
     subWallets: SubWallets,
-    daemon: IDaemon,
+    daemon: Daemon,
     config: Config): Promise<[TX, undefined] | [undefined, WalletError]> {
 
     let relaySuccess: boolean;
@@ -1367,7 +1382,7 @@ async function relayTransaction(
     );
 
     try {
-        [relaySuccess, errorMessage] = await daemon.sendTransaction(tx.rawTransaction);
+        [relaySuccess, errorMessage] = await daemon.sendTransaction(tx.toString());
 
     /* Timeout */
     } catch (err) {
@@ -1406,7 +1421,7 @@ async function relayTransaction(
 
     /* Store the unconfirmed transaction, update our balance */
     const returnTX: TX = await storeSentTransaction(
-        tx.hash, tx.transaction.outputs, tx.transaction.transactionKeys.publicKey,
+        tx.hash, tx.outputs, tx.transactionKeys.publicKey,
         fee, paymentID, inputs, subWallets, config,
     );
 
@@ -1432,7 +1447,7 @@ async function relayTransaction(
 
 async function storeSentTransaction(
     hash: string,
-    keyOutputs: Vout[],
+    keyOutputs: TransactionOutputs.ITransactionOutput[],
     txPublicKey: string,
     fee: number,
     paymentID: string,
@@ -1449,27 +1464,31 @@ async function storeSentTransaction(
     const spendKeys: string[] = subWallets.getPublicSpendKeys();
 
     for (const [outputIndex, output] of keyOutputs.entries()) {
-        /* Derive the spend key from the transaction, using the previous
-           derivation */
-        const derivedSpendKey = await underivePublicKey(
-            derivation, outputIndex, output.key, config,
-        );
+        if (output.type === TransactionOutputs.OutputType.KEY) {
+            const o = output as TransactionOutputs.KeyOutput;
 
-        /* See if the derived spend key matches any of our spend keys */
-        if (!_.includes(spendKeys, derivedSpendKey)) {
-            continue;
+            /* Derive the spend key from the transaction, using the previous
+               derivation */
+            const derivedSpendKey = await underivePublicKey(
+                derivation, outputIndex, o.key, config,
+            );
+
+            /* See if the derived spend key matches any of our spend keys */
+            if (!_.includes(spendKeys, derivedSpendKey)) {
+                continue;
+            }
+
+            const input: UnconfirmedInput = new UnconfirmedInput(
+                o.amount.toJSNumber(), o.key, hash,
+            );
+
+            subWallets.storeUnconfirmedIncomingInput(input, derivedSpendKey);
+
+            transfers.set(
+                derivedSpendKey,
+                o.amount.add(transfers.get(derivedSpendKey) || 0).toJSNumber(),
+            );
         }
-
-        const input: UnconfirmedInput = new UnconfirmedInput(
-            output.amount, output.key, hash,
-        );
-
-        subWallets.storeUnconfirmedIncomingInput(input, derivedSpendKey);
-
-        transfers.set(
-            derivedSpendKey,
-            output.amount + (transfers.get(derivedSpendKey) || 0),
-        );
     }
 
     for (const input of ourInputs) {
@@ -1505,12 +1524,9 @@ async function storeSentTransaction(
  * Verify the transaction is small enough to fit in a block
  */
 function isTransactionPayloadTooBig(
-    rawTransaction: string,
+    txSize: number,
     currentHeight: number,
     config: Config): WalletError {
-
-    /* Divided by two because it's represented as hex */
-    const txSize: number = rawTransaction.length / 2;
 
     const maxTxSize: number = getMaxTxSize(currentHeight, config.blockTargetTime);
 
@@ -1530,26 +1546,26 @@ function isTransactionPayloadTooBig(
  * Verify all the output amounts are members of PRETTY_AMOUNTS, otherwise they
  * will not be mixable
  */
-function verifyAmounts(amounts: Vout[]): boolean {
-    for (const vout of amounts) {
-        if (!PRETTY_AMOUNTS.includes(vout.amount)) {
-            return false;
+function verifyAmounts(amounts: TransactionOutputs.ITransactionOutput[]): boolean {
+    for (const output of amounts) {
+        if (output.type === TransactionOutputs.OutputType.KEY) {
+            if (!PRETTY_AMOUNTS.includes((output as TransactionOutputs.KeyOutput).amount.toJSNumber())) {
+                return false;
+            }
         }
     }
 
     return true;
 }
 
-function sumTransactionFee(transaction: Transaction): number {
-    let inputTotal: number = 0;
+function sumTransactionFee(transaction: CreatedTransaction): number {
+    const inputTotal: number = transaction.amount;
     let outputTotal: number = 0;
 
-    for (const input of transaction.inputs) {
-        inputTotal += input.amount;
-    }
-
     for (const output of transaction.outputs) {
-        outputTotal += output.amount;
+        if (output.type === TransactionOutputs.OutputType.KEY) {
+            outputTotal += (output as TransactionOutputs.KeyOutput).amount.toJSNumber();
+        }
     }
 
     return inputTotal - outputTotal;
@@ -1559,17 +1575,14 @@ function sumTransactionFee(transaction: Transaction): number {
  * Verify the transaction fee is the same as the requested transaction fee
  */
 function verifyTransactionFee(
-    transaction: CreatedTransaction,
+    transactionSize: number,
     expectedFee: FeeType,
     actualFee: number): boolean {
 
     if (expectedFee.isFixedFee) {
         return expectedFee.fixedFee === actualFee;
     } else {
-        /* Divided by two because it's represented as hex */
-        const txSize: number = transaction.rawTransaction.length / 2;
-
-        const calculatedFee: number = expectedFee.feePerByte * txSize;
+        const calculatedFee: number = expectedFee.feePerByte * transactionSize;
 
          /* Ensure fee is greater or equal to the fee per byte specified,
           * and no more than two times the fee per byte specified. */
@@ -1584,8 +1597,8 @@ function verifyTransactionFee(
 async function getRingParticipants(
     inputs: TxInputAndOwner[],
     mixin: number,
-    daemon: IDaemon,
-    config: Config): Promise<WalletError | RandomOutput[][]> {
+    daemon: Daemon,
+    config: Config): Promise<WalletError | Interfaces.RandomOutput[][]> {
 
     if (mixin === 0) {
         logger.log(
@@ -1645,7 +1658,7 @@ async function getRingParticipants(
         return new WalletError(WalletErrorCode.NOT_ENOUGH_FAKE_OUTPUTS);
     }
 
-    const randomOuts: RandomOutput[][] = [];
+    const randomOuts: Interfaces.RandomOutput[][] = [];
 
      /* Do the same check as above here, again. The reason being that
         we just find the first set of outputs matching the amount above,
@@ -1689,7 +1702,7 @@ async function getRingParticipants(
  * @return Returns either SUCCESS or an error representing the issue
  */
 function validateTransaction(
-    destinations: Array<[string, number]>,
+    destinations: [string, number][],
     mixin: number,
     fee: FeeType,
     paymentID: string,

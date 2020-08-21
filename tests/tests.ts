@@ -3,13 +3,13 @@ import * as colors from 'colors';
 import * as fs from 'fs';
 
 import {
-    IDaemon, Daemon, prettyPrintAmount, SUCCESS, validateAddresses,
+    Daemon, prettyPrintAmount, SUCCESS, validateAddresses,
     WalletBackend, WalletError, WalletErrorCode, LogLevel,
     isValidMnemonic, isValidMnemonicWord, createIntegratedAddress, Config,
     DaemonType,
 } from '../lib/index';
 
-import { CryptoUtils } from '../lib/CnUtils';
+import { generateKeyDerivation, underivePublicKey } from '../lib/CryptoWrapper';
 
 const doPerformanceTests: boolean = process.argv.includes('--do-performance-tests');
 
@@ -34,7 +34,13 @@ class Tester {
 
         console.log(colors.yellow(`=== ${testDescription} ===`));
 
-        const success = await testFunc();
+        let success = false;
+
+        try {
+            success = await testFunc();
+        } catch (err) {
+            console.log(`Error executing test: ${err}`);
+        }
 
         this.totalTests++;
 
@@ -76,7 +82,7 @@ function delay(ms: number): Promise<void> {
 
 function encryptDecryptWallet(
     wallet: WalletBackend,
-    daemon: IDaemon,
+    daemon: Daemon,
     password: string): boolean {
         const encryptedString = wallet.encryptWalletToString(password);
         const [newWallet, error] = WalletBackend.openWalletFromEncryptedString(daemon, encryptedString, password);
@@ -90,7 +96,7 @@ function encryptDecryptWallet(
 
 function roundTrip(
     wallet: WalletBackend,
-    daemon: IDaemon,
+    daemon: Daemon,
     password: string): boolean {
 
     /* Save wallet to file */
@@ -119,7 +125,7 @@ function roundTrip(
     const tester: Tester = new Tester();
 
     /* Setup a daemon */
-    const daemon: IDaemon = new Daemon(daemonAddress, daemonPort);
+    const daemon: Daemon = new Daemon(daemonAddress, daemonPort);
 
     /* Begin testing */
     await tester.test(async () => {
@@ -473,13 +479,13 @@ function roundTrip(
        'isValidMnemonic doesn\'t work!');
 
     await tester.test(async () => {
-        const daemon2: IDaemon = new Daemon('127.0.0.1', 11898);
+        const daemon2: Daemon = new Daemon('127.0.0.1', 11898);
 
         const wallet = WalletBackend.createWallet(daemon2);
 
         await wallet.start();
 
-        const daemon3: IDaemon = new Daemon(daemonAddress, daemonPort);
+        const daemon3: Daemon = new Daemon(daemonAddress, daemonPort);
 
         await wallet.swapNode(daemon3);
 
@@ -501,7 +507,7 @@ function roundTrip(
        'swapNode doesn\'t work!');
 
     await tester.test(async () => {
-        const daemon2: IDaemon = new Daemon('this is not a valid host', 7777);
+        const daemon2: Daemon = new Daemon('this is not a valid host', 7777);
 
         let success: boolean = false;
 
@@ -511,7 +517,7 @@ function roundTrip(
 
         await daemon2.init();
 
-        const daemon3: IDaemon = new Daemon(daemonAddress, daemonPort);
+        const daemon3: Daemon = new Daemon(daemonAddress, daemonPort);
 
         daemon3.on('disconnect', (err) => {
             success = false;
@@ -600,7 +606,7 @@ function roundTrip(
     if (doPerformanceTests) {
         await tester.test(async () => {
             /* Reinit daemon so it has no leftover state */
-            const daemon2: IDaemon = new Daemon(daemonAddress, daemonPort);
+            const daemon2: Daemon = new Daemon(daemonAddress, daemonPort);
 
             const wallet = WalletBackend.createWallet(daemon2);
 
@@ -630,9 +636,10 @@ function roundTrip(
         await tester.test(async () => {
 
             /* Just random public + private keys */
-            const derivation: string = CryptoUtils(new Config()).generateKeyDerivation(
+            const derivation: string = await generateKeyDerivation(
                 'f235acd76ee38ec4f7d95123436200f9ed74f9eb291b1454fbc30742481be1ab',
                 '89df8c4d34af41a51cfae0267e8254cadd2298f9256439fa1cfa7e25ee606606',
+                new Config(),
             );
 
             const loopIterations: number = 6000;
@@ -641,9 +648,11 @@ function roundTrip(
 
             for (let i = 0; i < loopIterations; i++) {
                 /* Use i as output index to prevent optimization */
-                const derivedOutputKey = CryptoUtils(new Config()).underivePublicKey(
-                    derivation, i,
+                const derivedOutputKey = underivePublicKey(
+                    derivation,
+                    i,
                     '14897efad619205256d9170192e50e2fbd7959633e274d1b6f94b1087d680451',
+                    new Config(),
                 );
             }
 
@@ -668,9 +677,10 @@ function roundTrip(
 
             for (let i = 0; i < loopIterations; i++) {
                 /* Just random public + private keys */
-                const derivation: string = CryptoUtils(new Config()).generateKeyDerivation(
+                const derivation: string = await generateKeyDerivation(
                     'f235acd76ee38ec4f7d95123436200f9ed74f9eb291b1454fbc30742481be1ab',
                     '89df8c4d34af41a51cfae0267e8254cadd2298f9256439fa1cfa7e25ee606606',
+                    new Config(),
                 );
             }
 

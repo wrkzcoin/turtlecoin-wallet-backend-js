@@ -383,6 +383,8 @@ Start of changelog.
 
 `npm install -g yarn` (Skip this if you already have yarn installed)
 
+`yarn install`
+
 `yarn build`
 
 Generated javascript files will be written to the dist/lib/ folder.
@@ -396,10 +398,7 @@ Generated javascript files will be written to the dist/lib/ folder.
 ### Before making a PR
 
 * Ensure you are editing the TypeScript code, and not the JavaScript code (You should be in the `lib/` folder)
-* Ensure you have built the JavaScript code from the TypeScript code: `yarn build`
 * Ensure you have updated the documentation if necessary - Documentation is generated from inline comments, jsdoc style.
 * Ensure you have rebuilt the documentation, if you have changed it: `yarn docs`
 * Ensure the tests all still pass: `yarn test`, or `yarn test-all` if you have a local daemon running.
-* Ensure your code adheres to the style requirements: `yarn style`
-
-You can try running `yarn style --fix` to automatically fix issues.
+* If adding a feature/fixing a bug, adding a test to verify your fix/feature functions as expected would be great. But don't sweat it.

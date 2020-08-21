@@ -211,7 +211,7 @@ export class Config implements IConfig {
      * The address prefix your coin uses - you can find this in CryptoNoteConfig.h.
      * In TurtleCoin, this converts to TRTL
      */
-    public addressPrefix: number = 3914525;
+    public addressPrefix: number = 999730;
 
     /**
      * Request timeout for daemon operations in milliseconds
@@ -248,7 +248,7 @@ export class Config implements IConfig {
     /**
      * Your coins 'ticker', generally used to refer to the coin, i.e. 123 TRTL
      */
-    public ticker: string = 'TRTL';
+    public ticker: string = 'WRKZ';
 
     /**
      * Most people haven't mined any blocks, so lets not waste time scanning
