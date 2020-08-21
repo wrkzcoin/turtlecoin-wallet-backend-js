@@ -3,6 +3,7 @@
 // Please see the included LICENSE file for more information.
 
 import { MixinLimit, MixinLimits } from './MixinLimits';
+import { LedgerTransport } from 'turtlecoin-utils';
 
 const version = require('../../package.json').version;
 
@@ -191,6 +192,12 @@ export interface IConfig {
      * Allows specifying a custom configuration object for the request module.
      */
     customRequestOptions?: any;
+
+    /**
+     * Defines whether we are using the LedgerNote class instead of the
+     * CryptoNote class
+     */
+    ledgerTransport?: LedgerTransport;
 
     [key: string]: any;
 }
@@ -398,6 +405,12 @@ export class Config implements IConfig {
      * Allows specifying a custom configuration object for the request module.
      */
     public customRequestOptions: any = {};
+
+    /**
+     * Defines whether we are using the LedgerNote class instead of the
+     * CryptoNote class
+     */
+    ledgerTransport?: LedgerTransport;
 
     [key: string]: any;
 }

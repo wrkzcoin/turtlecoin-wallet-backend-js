@@ -262,6 +262,21 @@ export class WalletError {
                 return 'The prepared transaction given could not be found. Note ' +
                        'that prepared transactions are lost upon restarting the wallet.';
             }
+            case WalletErrorCode.AMOUNT_UGLY: {
+                return 'The amount given does not have only single significant digits.';
+            }
+            case WalletErrorCode.LEDGER_TRANSPORT_REQUIRED: {
+                return 'A Ledger device transport is required';
+            }
+            case WalletErrorCode.LEDGER_SUBWALLETS_NOT_SUPPORTED: {
+                return 'Ledger based wallets do not currently support subwallets.';
+            }
+            case WalletErrorCode.LEDGER_COULD_NOT_GET_KEYS: {
+                return 'Could not retrieve wallet keys from Ledger device.';
+            }
+            case WalletErrorCode.LEDGER_WRONG_DEVICE_FOR_WALLET_FILE: {
+                return 'Incorrect Ledger wallet connected for this wallet file';
+            }
         }
     }
 }
@@ -482,6 +497,24 @@ export enum WalletErrorCode {
 
     /* Prepared transaction cannot be found, perhaps wallet application has been restarted */
     PREPARED_TRANSACTION_NOT_FOUND = 58,
+
+    /**
+     * The amount given does not have only a single significant digit - i.e.,
+     * it cannot be used directly as a transaction input/output amount
+     */
+    AMOUNT_UGLY = 59,
+
+    /* A Ledger transport is required */
+    LEDGER_TRANSPORT_REQUIRED = 59,
+
+    /* Ledger based wallets do not currently support subwallets. */
+    LEDGER_SUBWALLETS_NOT_SUPPORTED = 60,
+
+    /* Could not retrieve wallet keys from Ledger device. */
+    LEDGER_COULD_NOT_GET_KEYS = 61,
+
+    /* Incorrect Ledger wallet connected for this wallet file */
+    LEDGER_WRONG_DEVICE_FOR_WALLET_FILE = 62,
 }
 
 /**

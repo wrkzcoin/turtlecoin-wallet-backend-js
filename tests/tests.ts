@@ -3,53 +3,75 @@ import * as colors from 'colors';
 import * as fs from 'fs';
 
 import {
-    Daemon, prettyPrintAmount, SUCCESS, validateAddresses,
-    WalletBackend, WalletError, WalletErrorCode, LogLevel,
-    isValidMnemonic, isValidMnemonicWord, createIntegratedAddress, Config,
+    Config,
+    createIntegratedAddress,
+    Daemon,
     DaemonType,
+    isValidMnemonic,
+    isValidMnemonicWord,
+    prettyPrintAmount,
+    SUCCESS,
+    validateAddresses,
+    WalletBackend,
+    WalletError,
+    WalletErrorCode,
 } from '../lib/index';
 
-import { generateKeyDerivation, underivePublicKey } from '../lib/CryptoWrapper';
+import {generateKeyDerivation, underivePublicKey} from '../lib/CryptoWrapper';
+
+import {Address, Crypto as TurtleCoinCrypto, CryptoType, LedgerTransport} from 'turtlecoin-utils';
+import {Test} from 'tslint';
 
 const doPerformanceTests: boolean = process.argv.includes('--do-performance-tests');
 
 const daemonAddress = 'blockapi.turtlepay.io';
 const daemonPort = 443;
 
+enum TestStatus {
+    PASS,
+    FAIL,
+    SKIP
+}
+
 class Tester {
 
     public totalTests: number = 0;
     public testsFailed: number = 0;
     public testsPassed: number = 0;
+    public testsSkipped: number = 0;
 
     constructor() {
         console.log(colors.yellow('=== Started testing ===\n'));
     }
 
     public async test(
-        testFunc: () => Promise<boolean>,
+        testFunc: () => Promise<TestStatus>,
         testDescription: string,
         successMsg: string,
-        failMsg: string) {
+        failMsg: string,
+        skipMsg?: string) {
 
         console.log(colors.yellow(`=== ${testDescription} ===`));
 
-        let success = false;
+        let status: TestStatus = TestStatus.FAIL;
 
         try {
-            success = await testFunc();
+            status = await testFunc();
         } catch (err) {
             console.log(`Error executing test: ${err}`);
         }
 
         this.totalTests++;
 
-        if (success) {
+        if (status === TestStatus.PASS) {
             console.log(colors.green(' ✔️  ') + successMsg);
             this.testsPassed++;
-        } else {
+        } else if (status === TestStatus.FAIL) {
             console.log(colors.red(' ❌ ') + failMsg);
             this.testsFailed++;
+        } else {
+            console.log(colors.blue(' - ') + skipMsg);
+            this.testsSkipped++;
         }
 
         console.log('');
@@ -65,6 +87,10 @@ class Tester {
         console.log(colors.green(' ✔️  ')
                   + colors.white('Tests passed: ')
                   + colors.green(this.testsPassed.toString()));
+
+        console.log(colors.blue(' - ')
+                  + colors.white('Tests skipped: ')
+                  + colors.blue(this.testsSkipped.toString()));
 
         console.log(colors.red(' ❌  ')
                   + colors.white('Tests failed: ')
@@ -141,8 +167,7 @@ async function roundTrip(
         /* Re-dump to JSON  */
         const finalJSON = JSON.stringify(loadedWallet, null, 4);
 
-        return initialJSON === finalJSON;
-
+        return (initialJSON === finalJSON) ? TestStatus.PASS : TestStatus.FAIL;
     }, 'Checking wallet JSON serialization',
        'Wallet serialization was successful',
        'Initial JSON is not equal to final json!');
@@ -153,8 +178,7 @@ async function roundTrip(
             daemon, './tests/test.wallet', 'password',
         );
 
-        return error === undefined;
-
+        return (error === undefined) ? TestStatus.PASS : TestStatus.FAIL;
     }, 'Loading test wallet file',
        'Wallet loading succeeded',
        'Wallet loading failed');
@@ -164,7 +188,7 @@ async function roundTrip(
             const wallet = await WalletBackend.createWallet(daemon);
 
             if (!roundTrip(wallet, daemon, 'password')) {
-                return false;
+                return TestStatus.FAIL;
             }
 
             /* Verify loaded wallet runs */
@@ -175,11 +199,10 @@ async function roundTrip(
             await wallet.stop();
 
         } catch (err) {
-            return false;
+            return TestStatus.FAIL;
         }
 
-        return true;
-
+        return TestStatus.PASS;
     }, 'Checking can open saved file',
        'Can open saved file',
        'Can\'t open saved file!');
@@ -217,7 +240,7 @@ async function roundTrip(
             wallet, daemon, 'Дайте советов чтоли!',
         );
 
-        return test1 && test2 && test3 && test4 && test5 && test6;
+        return (test1 && test2 && test3 && test4 && test5 && test6) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Verifying special passwords work as expected',
        'Special passwords work as expected',
@@ -226,7 +249,7 @@ async function roundTrip(
     await tester.test(async () => {
         const wallet = await WalletBackend.createWallet(daemon);
 
-        return encryptDecryptWallet(wallet, daemon, 'password');
+        return (await encryptDecryptWallet(wallet, daemon, 'password')) ? TestStatus.PASS : TestStatus.FAIL;
     },  'Verifying wallet encryption and decryption work as expected',
         'Encrypt/Decrypt wallet works as expected',
         'Encrypt/Decrypt wallet does not work as expected!');
@@ -242,8 +265,9 @@ async function roundTrip(
         const [privateSpendKey, privateViewKey]
             = (seedWallet as WalletBackend).getPrimaryAddressPrivateKeys();
 
-        return privateSpendKey === 'd61a57a59318d70ff77cc7f8ad7f62887c828da1d5d3f3b0d2f7d3fa596c2904'
-            && privateViewKey === '688e5229df6463ec4c27f6ee11c3f1d3d4b4d2480c0aabe64fb807182cfdc801';
+        return (privateSpendKey === 'd61a57a59318d70ff77cc7f8ad7f62887c828da1d5d3f3b0d2f7d3fa596c2904'
+            && privateViewKey === '688e5229df6463ec4c27f6ee11c3f1d3d4b4d2480c0aabe64fb807182cfdc801') ?
+            TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Verifying seed restore works correctly',
        'Mnemonic seed wallet has correct keys',
@@ -258,9 +282,9 @@ async function roundTrip(
 
         const [seed, error2] = await (keyWallet as WalletBackend).getMnemonicSeed();
 
-        return seed === 'skulls woozy ouch summon gifts huts waffle ourselves obtains ' +
+        return (seed === 'skulls woozy ouch summon gifts huts waffle ourselves obtains ' +
                         'hexagon tadpoles hacksaw dormant hence abort listen history ' +
-                        'atom cadets stylishly snout vegan girth guest history';
+                        'atom cadets stylishly snout vegan girth guest history') ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Verifying key restore works correctly',
        'Deterministic key wallet has correct seed',
@@ -275,7 +299,8 @@ async function roundTrip(
 
         const [seed, err] = await (keyWallet as WalletBackend).getMnemonicSeed();
 
-        return (err as WalletError).errorCode === WalletErrorCode.KEYS_NOT_DETERMINISTIC;
+        return ((err as WalletError).errorCode === WalletErrorCode.KEYS_NOT_DETERMINISTIC) ?
+            TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Verifying non deterministic wallet doesn\'t create seed',
        'Non deterministic wallet has no seed',
@@ -290,7 +315,7 @@ async function roundTrip(
 
         const [privateSpendKey, privateViewKey] = (viewWallet as WalletBackend).getPrimaryAddressPrivateKeys();
 
-        return privateSpendKey === '0'.repeat(64);
+        return (privateSpendKey === '0'.repeat(64)) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Verifying view wallet has null private spend key',
        'View wallet has null private spend key',
@@ -306,8 +331,8 @@ async function roundTrip(
 
         const address = (seedWallet as WalletBackend).getPrimaryAddress();
 
-        return address === 'TRTLv1s9JQeHAJFoHvcqVBPyHYom2ynKeK6dpYptbp8gQNzdzE73ZD' +
-                           'kNmNurqfhhcMSUXpS1ZGEJKiKJUcPCyw7vYaCc354DCN1';
+        return (address === 'TRTLv1s9JQeHAJFoHvcqVBPyHYom2ynKeK6dpYptbp8gQNzdzE73ZD' +
+                           'kNmNurqfhhcMSUXpS1ZGEJKiKJUcPCyw7vYaCc354DCN1') ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Verifying correct address is created from seed',
        'Seed wallet has correct address',
@@ -318,7 +343,7 @@ async function roundTrip(
         const test2: boolean = prettyPrintAmount(0) === '0.00 TRTL';
         const test3: boolean = prettyPrintAmount(-1234) === '-12.34 TRTL';
 
-        return test1 && test2 && test3;
+        return (test1 && test2 && test3) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing prettyPrintAmount',
        'prettyPrintAmount works',
@@ -347,7 +372,7 @@ async function roundTrip(
         /* TODO: Add a test for testing a new subwallet address, when we add
            subwallet creation */
 
-        return test1 && test2 && test3;
+        return (test1 && test2 && test3) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing getMnemonicSeedForAddress',
        'getMnemonicSeedForAddress works',
@@ -359,7 +384,7 @@ async function roundTrip(
         /* Not called wallet.start(), so node fee should be unset here */
         const [feeAddress, feeAmount] = wallet.getNodeFee();
 
-        return feeAddress === '' && feeAmount === 0;
+        return (feeAddress === '' && feeAmount === 0) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing getNodeFee',
        'getNodeFee works',
@@ -372,7 +397,7 @@ async function roundTrip(
 
         const err: WalletError = await validateAddresses([address], false);
 
-        return _.isEqual(err, SUCCESS);
+        return (_.isEqual(err, SUCCESS)) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing getPrimaryAddress',
        'getPrimaryAddress works',
@@ -387,7 +412,8 @@ async function roundTrip(
             'TRTLuybJFCU8BjP18bH3VZCNAu1fZ2r3d85SsU2w3VnJAHoRfnzLKgtTK2b58nfwDu59hKxwVuSMhTN31gmUW8nN9aoAN9N8Qyb',
         );
 
-        return (viewWallet as WalletBackend).getPrivateViewKey() === privateViewKey;
+        return ((viewWallet as WalletBackend).getPrivateViewKey() === privateViewKey) ?
+            TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing getPrivateViewKey',
        'getPrivateViewKey works',
@@ -405,8 +431,9 @@ async function roundTrip(
         const [publicSpendKey, privateSpendKey, error2]
             = await wallet.getSpendKeys(wallet.getPrimaryAddress());
 
-        return publicSpendKey === 'ff9b6e048297ee435d6219005974c2c8df620a4aca9ca5c4e13f071823482029' &&
-               privateSpendKey === '55e0aa4ca65c0ae016c7364eec313f56fc162901ead0e38a9f846686ac78560f';
+        return (publicSpendKey === 'ff9b6e048297ee435d6219005974c2c8df620a4aca9ca5c4e13f071823482029' &&
+               privateSpendKey === '55e0aa4ca65c0ae016c7364eec313f56fc162901ead0e38a9f846686ac78560f') ?
+            TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing getSpendKeys',
        'getSpendKeys works',
@@ -441,7 +468,7 @@ async function roundTrip(
             test3 = true;
         }
 
-        return test1 && test2 && test3;
+        return (test1 && test2 && test3) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing createIntegratedAddress',
        'createIntegratedAddress works',
@@ -458,7 +485,8 @@ async function roundTrip(
 
         const address: string = (keyWallet as WalletBackend).getPrimaryAddress();
 
-        return address === 'dg5NZstxyAegrTA1Z771tPZaf13V6YHAjUjAieQfjwCb6P1eYHuMmwRcDcQ1eAs41sQrh98FjBXn257HZzh2CCwE2spKE2gmA';
+        return (address === 'dg5NZstxyAegrTA1Z771tPZaf13V6YHAjUjAieQfjwCb6P1eYHuMmwRcDcQ1eAs41sQrh98FjBXn257HZzh2CCwE2spKE2gmA') ?
+            TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing supplied config is applied',
        'Supplied config applied correctly',
@@ -472,7 +500,7 @@ async function roundTrip(
         const test5: boolean = !(await isValidMnemonic('nugget lazy gang sonic vulture exit veteran poverty affair ringing opus soapy sonic afield dating lectures worry tuxedo ruffled rated locker bested aunt bifocals soapy'))[0];
         const test6: boolean = !(await isValidMnemonic('a lazy gang sonic vulture exit veteran poverty affair ringing opus soapy sonic afield dating lectures worry tuxedo ruffled rated locker bested aunt bifocals opus'))[0];
 
-        return test1 && test2 && test3 && test4 && test5 && test6;
+        return (test1 && test2 && test3 && test4 && test5 && test6) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing isValidMnemonic',
        'isValidMnemonic works',
@@ -493,14 +521,14 @@ async function roundTrip(
 
         await wallet.stop();
 
-        return _.isEqual(info, {
+        return (_.isEqual(info, {
             daemonType: DaemonType.BlockchainCacheApi,
             daemonTypeDetermined: true,
             host: daemonAddress,
             port: daemonPort,
             ssl: true,
             sslDetermined: true,
-        });
+        })) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing swapNode',
        'swapNode works',
@@ -525,7 +553,7 @@ async function roundTrip(
 
         await daemon3.init();
 
-        return success;
+        return (success) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing daemon events',
        'Daemon events work',
@@ -553,7 +581,7 @@ async function roundTrip(
 
         const d = unlockedBalance === 1234 && lockedBalance === 0;
 
-        return a && b && c && d;
+        return (a && b && c && d) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing rewind',
        'Rewind succeeded',
@@ -578,7 +606,7 @@ async function roundTrip(
 
         const c = (error2 as WalletError).errorCode === WalletErrorCode.SUBWALLET_ALREADY_EXISTS;
 
-        return a && b && c;
+        return (a && b && c) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing subwallets',
        'Subwallets work',
@@ -597,7 +625,7 @@ async function roundTrip(
             }
         }
 
-        return success;
+        return (success) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing getWalletCount',
        'getWalletCount works',
@@ -627,7 +655,7 @@ async function roundTrip(
 
             const test2: boolean = d !== 0 || e !== 0 || f !== 0;
 
-            return test1 && test2;
+            return (test1 && test2) ? TestStatus.PASS : TestStatus.FAIL;
 
         }, 'Testing getSyncStatus (5 second test)',
            'getSyncStatus works',
@@ -664,7 +692,7 @@ async function roundTrip(
 
             console.log(colors.green(' ✔️  ') + `Time to perform underivePublicKey: ${timePerDerivation} ms`);
 
-            return true;
+            return TestStatus.PASS;
 
         }, 'Testing underivePublicKey performance',
            'underivePublicKey performance test complete',
@@ -692,7 +720,7 @@ async function roundTrip(
 
             console.log(colors.green(' ✔️  ') + `Time to perform generateKeyDerivation: ${timePerDerivation} ms`);
 
-            return true;
+            return TestStatus.PASS;
 
         }, 'Testing generateKeyDerivation performance',
            'generateKeyDerivation performance test complete',
@@ -724,7 +752,7 @@ async function roundTrip(
             if (walletBlockCount === 0) {
                 console.log(colors.red(' ❌ ') +
                     'Failed to sync with blockchain cache...');
-                return false;
+                return TestStatus.FAIL;
             }
 
             const executionTime: number = endTime - startTime;
@@ -733,11 +761,174 @@ async function roundTrip(
 
             console.log(colors.green(' ✔️  ') + `Time to process one block: ${timePerBlock} ms`);
 
-            return true;
+            return TestStatus.PASS;
 
         }, 'Testing wallet syncing performance (60 second test)',
            'Wallet syncing performance test complete',
            'Wallet syncing performance test failed!');
+    }
+
+    if (TurtleCoinCrypto.type === CryptoType.NODEADDON) {
+        let skipLedgerTests = false;
+        let TransportNodeHID: any;
+        let wallet: WalletBackend;
+        let address: Address;
+        let transport: LedgerTransport;
+
+        try {
+            // tslint:disable-next-line:no-implicit-dependencies
+            TransportNodeHID = (await import('@ledgerhq/hw-transport-node-hid')).default;
+
+            const devices = await TransportNodeHID.list();
+
+            if (devices.length === 0) {
+                skipLedgerTests = true;
+            }
+        } catch (e) {
+            skipLedgerTests = true;
+        }
+
+        await tester.test(async () => {
+            if (skipLedgerTests) {
+                return TestStatus.SKIP;
+            }
+
+            try {
+                transport = await TransportNodeHID.create(1000);
+
+                wallet = await WalletBackend.createWallet(daemon, {
+                    ledgerTransport: transport
+                })
+
+                return TestStatus.PASS;
+            } catch (e) {
+                skipLedgerTests = true;
+
+                return TestStatus.FAIL;
+            }
+        },
+            'Create Wallet from Ledger',
+            'Wallet Created',
+            'Failed to connect to available Ledger',
+            'Ledger tests skipped');
+
+        await tester.test(async () => {
+            if (skipLedgerTests) {
+                return TestStatus.SKIP;
+            }
+
+            try {
+                address = await Address.fromAddress(await wallet.getPrimaryAddress());
+
+                return TestStatus.PASS;
+            } catch (e) {
+                skipLedgerTests = true;
+
+                return TestStatus.FAIL;
+            }
+        },
+            'Get Wallet Address',
+            'Retrieved wallet address',
+            'Failed to retrieve wallet address',
+            'Ledger tests skipped');
+
+        await tester.test(async () => {
+            if (skipLedgerTests) {
+                return TestStatus.SKIP;
+            }
+
+            if (!wallet.saveWalletToFile('tmp.wallet', 'password')) {
+                skipLedgerTests = true;
+
+                return TestStatus.FAIL
+            }
+
+            return TestStatus.PASS;
+        },
+            'Save Ledger Wallet',
+            'Saved wallet successfully',
+            'Failed to save wallet to file',
+            'Ledger tests skipped');
+
+        await tester.test(async () => {
+            if (skipLedgerTests) {
+                return TestStatus.SKIP;
+            }
+
+            const [, error] = await WalletBackend.openWalletFromFile(daemon, 'tmp.wallet', 'password');
+
+            if (error) {
+                return TestStatus.PASS;
+            }
+
+            return TestStatus.FAIL;
+        },
+            'Fail to open Ledger wallet without Ledger transport',
+            'Test passed',
+            'Test failed',
+            'Ledger tests skipped');
+
+        await tester.test(async () => {
+            if (skipLedgerTests) {
+                return TestStatus.SKIP;
+            }
+
+            const [openedWallet, error] = await WalletBackend.openWalletFromFile(daemon, 'tmp.wallet',
+                'password', { ledgerTransport: transport });
+
+            /* Remove file */
+            fs.unlinkSync('tmp.wallet');
+
+            if (error || !openedWallet) {
+                return TestStatus.FAIL;
+            }
+
+            wallet = openedWallet;
+
+            return TestStatus.PASS;
+        },
+            'Open Ledger wallet',
+            'Test passed',
+            'Test failed',
+            'Ledger tests skipped');
+
+        await tester.test(async () => {
+            if (skipLedgerTests) {
+                return TestStatus.SKIP;
+            }
+
+            const [, error] = await wallet.addSubWallet();
+
+            if (error) {
+                return TestStatus.PASS;
+            }
+
+            return TestStatus.FAIL;
+        },
+            'Fail to create subwallet for Ledger based wallet',
+            'Test passed',
+            'Test failed',
+            'Ledger tests skipped')
+
+        await tester.test(async () => {
+            if (skipLedgerTests) {
+                return TestStatus.SKIP;
+            }
+
+            const [, error] = await WalletBackend.importWalletFromLedger(
+                daemon, 2000000, {
+                ledgerTransport: transport});
+
+            if (error) {
+                return TestStatus.FAIL;
+            }
+
+            return TestStatus.PASS;
+        },
+            'Import wallet from Ledger',
+            'Test passed',
+            'Test failed',
+            'Ledger tests skipped')
     }
 
     /* Print a summary of passed/failed tests */

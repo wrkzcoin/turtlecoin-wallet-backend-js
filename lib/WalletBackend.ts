@@ -30,6 +30,7 @@ import {Config, IConfig, MergeConfig} from './Config';
 import {LogCategory, logger, LogLevel} from './Logger';
 import {SynchronizationStatus} from './SynchronizationStatus';
 import {SUCCESS, WalletError, WalletErrorCode} from './WalletError';
+import {CryptoUtils} from './CnUtils';
 
 import {
     Block,
@@ -488,7 +489,7 @@ export class WalletBackend extends EventEmitter {
      * }
      * ```
      *
-     * @param daemon        An implementation of the Daemon interface.
+     * @param daemon
      *
      * @param json          Wallet info encoded as a JSON encoded string. Note
      *                      that this should be a *string*, NOT a JSON object.
@@ -507,11 +508,38 @@ export class WalletBackend extends EventEmitter {
             LogCategory.GENERAL,
         );
 
+        const merged: Config = MergeConfig(config);
+
         assertString(json, 'json');
 
         try {
-            const wallet = JSON.parse(json, WalletBackend.reviver);
-            wallet.initAfterLoad(daemon, MergeConfig(config));
+            const wallet: WalletBackend = JSON.parse(json, WalletBackend.reviver);
+
+            if (await wallet.isLedgerRequired()) {
+                if (!merged.ledgerTransport) {
+                    return [undefined, new WalletError(WalletErrorCode.LEDGER_TRANSPORT_REQUIRED)];
+                }
+
+                try {
+                    await CryptoUtils(merged).init();
+
+                    await CryptoUtils(merged).fetchKeys();
+
+                    const ledgerAddress = CryptoUtils(merged).address;
+
+                    if (!ledgerAddress) {
+                        return [undefined, new WalletError(WalletErrorCode.LEDGER_COULD_NOT_GET_KEYS)];
+                    }
+
+                    if (wallet.getPrimaryAddress() !== await ledgerAddress.address()) {
+                        return [undefined, new WalletError(WalletErrorCode.LEDGER_WRONG_DEVICE_FOR_WALLET_FILE)];
+                    }
+                } catch (e) {
+                    return [undefined, new WalletError(WalletErrorCode.LEDGER_COULD_NOT_GET_KEYS)];
+                }
+            }
+
+            wallet.initAfterLoad(daemon, merged);
             return [wallet, undefined];
         } catch (err) {
             return [undefined, new WalletError(WalletErrorCode.WALLET_FILE_CORRUPTED)];
@@ -539,7 +567,7 @@ export class WalletBackend extends EventEmitter {
      * }
      * ```
      *
-     * @param daemon        An implementation of the Daemon interface.
+     * @param daemon
      *
      * @param scanHeight    The height to begin scanning the blockchain from.
      *                      This can greatly increase sync speeds if given.
@@ -611,7 +639,7 @@ export class WalletBackend extends EventEmitter {
      * }
      * ```
      *
-     * @param daemon        An implementation of the Daemon interface.
+     * @param daemon
      *
      * @param scanHeight    The height to begin scanning the blockchain from.
      *                      This can greatly increase sync speeds if given.
@@ -673,6 +701,91 @@ export class WalletBackend extends EventEmitter {
     }
 
     /**
+     * Imports a wallet from a Ledger hardware wallet
+     *
+     * Example:
+     * ```javascript
+     * const WB = require('turtlecoin-wallet-backend');
+     * const TransportNodeHID = require('@ledgerhq/hw-transport-node-hid').default
+     *
+     * const daemon = new WB.Daemon('127.0.0.1', 11898);
+     *
+     * const transport = await TransportNodeHID.create();
+     *
+     * const [wallet, err] = await WB.WalletBackend.importWalletFromLedger(daemon, 100000, {
+     *     ledgerTransport: transport
+     * });
+     *
+     * if (err) {
+     *      console.log('Failed to load wallet: ' + err.toString());
+     * }
+     * ```
+     *
+     * @param daemon
+     *
+     * @param scanHeight    The height to begin scanning the blockchain from.
+     *                      This can greatly increase sync speeds if given.
+     *                      Defaults to zero.
+     *
+     * @param config
+     */
+    public static async importWalletFromLedger(
+        daemon: Daemon,
+        scanHeight: number = 0,
+        config: IConfig): Promise<[WalletBackend, undefined] | [undefined, WalletError]> {
+
+        logger.log(
+            'Function importWalletFromLedger called',
+            LogLevel.DEBUG,
+            LogCategory.GENERAL,
+        );
+
+        if (!config.ledgerTransport) {
+            return [undefined, new WalletError(WalletErrorCode.LEDGER_TRANSPORT_REQUIRED)];
+        }
+
+        assertNumber(scanHeight, 'scanHeight');
+
+        if (scanHeight < 0) {
+            return [undefined, new WalletError(WalletErrorCode.NEGATIVE_VALUE_GIVEN)];
+        }
+
+        if (!Number.isInteger(scanHeight)) {
+            return [undefined, new WalletError(WalletErrorCode.NON_INTEGER_GIVEN)];
+        }
+
+        const merged = MergeConfig(config);
+
+        let address: Address;
+
+        try {
+            await CryptoUtils(merged).init();
+
+            await CryptoUtils(merged).fetchKeys();
+
+            const tmpAddress = CryptoUtils(merged).address;
+
+            if (tmpAddress) {
+                address = tmpAddress;
+            } else {
+                return [undefined, new WalletError(WalletErrorCode.LEDGER_COULD_NOT_GET_KEYS)];
+            }
+        } catch (e) {
+            return [undefined, new WalletError(WalletErrorCode.LEDGER_COULD_NOT_GET_KEYS)];
+        }
+
+        /* Can't sync from the current scan height, not newly created */
+        const newWallet: boolean = false;
+
+        const wallet = await WalletBackend.init(
+            merged, daemon, await address.address(), scanHeight, newWallet,
+            address.view.privateKey, '0'.repeat(64),
+        );
+
+        return [wallet, undefined];
+    }
+
+    /**
      * This method imports a wallet you have previously created, in a 'watch only'
      * state. This wallet can view incoming transactions, but cannot send
      * transactions. It also cannot view outgoing transactions, so balances
@@ -697,7 +810,7 @@ export class WalletBackend extends EventEmitter {
      * }
      * ```
      *
-     * @param daemon        An implementation of the Daemon interface.
+     * @param daemon
      *
      * @param scanHeight    The height to begin scanning the blockchain from.
      *                      This can greatly increase sync speeds if given.
@@ -769,7 +882,7 @@ export class WalletBackend extends EventEmitter {
      * const wallet = await WB.WalletBackend.createWallet(daemon);
      * ```
      *
-     * @param daemon        An implementation of the Daemon interface.
+     * @param daemon
      * @param config
      */
     public static async createWallet(
@@ -788,7 +901,21 @@ export class WalletBackend extends EventEmitter {
 
         const merged = MergeConfig(config);
 
-        const address = await Address.fromEntropy(undefined, undefined, merged.addressPrefix);
+        let address = await Address.fromEntropy(undefined, undefined, merged.addressPrefix);
+
+        if (merged.ledgerTransport) {
+            await CryptoUtils(merged).init();
+
+            await CryptoUtils(merged).fetchKeys();
+
+            const ledgerAddress = CryptoUtils(merged).address;
+
+            if (ledgerAddress) {
+                address = ledgerAddress;
+            } else {
+                throw new Error('Could not create wallet from Ledger transport');
+            }
+        }
 
         return WalletBackend.init(
             merged, daemon, await address.address(), scanHeight, newWallet,
@@ -1200,6 +1327,10 @@ export class WalletBackend extends EventEmitter {
             LogCategory.GENERAL,
         );
 
+        if (!await this.subwalletsSupported()) {
+            return [undefined, new WalletError(WalletErrorCode.LEDGER_SUBWALLETS_NOT_SUPPORTED)];
+        }
+
         const currentHeight: number = this.walletSynchronizer.getHeight();
 
         return this.subWallets.addSubWallet(currentHeight);
@@ -1237,6 +1368,10 @@ export class WalletBackend extends EventEmitter {
             LogLevel.DEBUG,
             LogCategory.GENERAL,
         );
+
+        if (!await this.subwalletsSupported()) {
+            return [undefined, new WalletError(WalletErrorCode.LEDGER_SUBWALLETS_NOT_SUPPORTED)];
+        }
 
         const currentHeight: number = this.walletSynchronizer.getHeight();
 
@@ -1301,6 +1436,10 @@ export class WalletBackend extends EventEmitter {
             LogCategory.GENERAL,
         );
 
+        if (!await this.subwalletsSupported()) {
+            return [undefined, new WalletError(WalletErrorCode.LEDGER_SUBWALLETS_NOT_SUPPORTED)];
+        }
+
         const currentHeight: number = this.walletSynchronizer.getHeight();
 
         if (scanHeight === undefined) {
@@ -1352,6 +1491,10 @@ export class WalletBackend extends EventEmitter {
             LogLevel.DEBUG,
             LogCategory.GENERAL,
         );
+
+        if (!await this.subwalletsSupported()) {
+            return new WalletError(WalletErrorCode.LEDGER_SUBWALLETS_NOT_SUPPORTED);
+        }
 
         assertString(address, 'address');
 
@@ -3283,5 +3426,15 @@ export class WalletBackend extends EventEmitter {
 
         /* We're done. */
         this.currentlyOptimizing = false;
+    }
+
+    private async isLedgerRequired(): Promise<boolean> {
+        const [privateSpendKey] = await this.getPrimaryAddressPrivateKeys();
+
+        return !this.subWallets.isViewWallet && privateSpendKey === '0'.repeat(64);
+    }
+
+    private async subwalletsSupported(): Promise<boolean> {
+        return !(await this.isLedgerRequired() && this.config.ledgerTransport);
     }
 }

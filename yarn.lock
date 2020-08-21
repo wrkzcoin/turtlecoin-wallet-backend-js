@@ -107,6 +107,14 @@
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.159.tgz#61089719dc6fdd9c5cb46efc827f2571d1517065"
   integrity sha512-gF7A72f7WQN33DpqOWw9geApQPh4M3PxluMtaHxWHXEGSN12/WbcEk/eNSqWNQcQhF66VSZ06vCF94CrHwXJDg==
 
+"@types/node-fetch@^2.5.7":
+  version "2.5.7"
+  resolved "https://registry.yarnpkg.com/@types/node-fetch/-/node-fetch-2.5.7.tgz#20a2afffa882ab04d44ca786449a276f9f6bbf3c"
+  integrity sha512-o2WVNf5UhWRkxlf6eq+jMZDu7kjgpgJfl4xVNlvryc95O/6F2ld8ztKX+qu+Rjyet93WAWm5LjeX9H5FGkODvw==
+  dependencies:
+    "@types/node" "*"
+    form-data "^3.0.0"
+
 "@types/node-hid@*":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@types/node-hid/-/node-hid-1.2.0.tgz#e3e5dfaad07c84e957af96809f6b2f03fc267f80"
@@ -152,6 +160,13 @@
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/@types/tough-cookie/-/tough-cookie-4.0.0.tgz#fef1904e4668b6e5ecee60c52cc6a078ffa6697d"
   integrity sha512-I99sngh224D0M7XgW1s120zxCt3VYQ3IQsuw3P3jbq5GG4yc79+ZjyKznyOGIQrflfylLgcfekeZW/vk0yng6A==
+
+abort-controller@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/abort-controller/-/abort-controller-3.0.0.tgz#eaf54d53b62bae4138e809ca225c8439a6efb392"
+  integrity sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==
+  dependencies:
+    event-target-shim "^5.0.0"
 
 aes-js@^3.1.2:
   version "3.1.2"
@@ -341,10 +356,10 @@ builtin-modules@^1.1.1:
   resolved "https://registry.yarnpkg.com/builtin-modules/-/builtin-modules-1.1.1.tgz#270f076c5a72c02f5b65a47df94c5fe3a278892f"
   integrity sha1-Jw8HbFpywC9bZaR9+Uxf46J4iS8=
 
-bytestream-helper@0.0.9:
-  version "0.0.9"
-  resolved "https://registry.yarnpkg.com/bytestream-helper/-/bytestream-helper-0.0.9.tgz#fb87a7dc386ca80110437a5e7ef1e96eedec1dae"
-  integrity sha512-9Avby3kbDISUqofH7t1AE9xvW8uyiRzvIOBu4HtWO0In/v5FGtCe/XFK0pC65WPnvITXuwN9H8FkcbERtzNzBA==
+bytestream-helper@0.0.10:
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/bytestream-helper/-/bytestream-helper-0.0.10.tgz#53d0a5d1e22440643b7b393bdda79c6f63f9b23a"
+  integrity sha512-DzpDTGNUdSH3zg088xYfRg4vFieWOwC0iRD1K7N4Yh2kH6LWGQ0HDoaHGtYWBoSFEmeNat2NH8tooM+LbMNdwg==
   dependencies:
     big-integer "^1.6.48"
 
@@ -447,7 +462,7 @@ colors@^1.4.0:
   resolved "https://registry.yarnpkg.com/colors/-/colors-1.4.0.tgz#c50491479d4c1bdaed2c9ced32cf7c7dc2360f78"
   integrity sha512-a+UqTh4kgZg/SlGvfbzDHpgRu7AAQOmmqRHJnxhRZICKFUT91brVhNNt58CMWU9PsBbv3PDCZUHbVxuDiH2mtA==
 
-combined-stream@^1.0.6, combined-stream@~1.0.6:
+combined-stream@^1.0.6, combined-stream@^1.0.8, combined-stream@~1.0.6:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/combined-stream/-/combined-stream-1.0.8.tgz#c3d45a8b34fd730631a110a8a2520682b31d5a7f"
   integrity sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==
@@ -634,6 +649,11 @@ esprima@^4.0.0:
   resolved "https://registry.yarnpkg.com/esprima/-/esprima-4.0.1.tgz#13b04cdb3e6c5d19df91ab6987a8695619b0aa71"
   integrity sha512-eGuFFw7Upda+g4p+QHvnW0RyTX/SVeJBDM/gCtMARO0cLuT2HcEKnTPvhjV6aGeqrCB/sbNop0Kszm0jsaWU4A==
 
+event-target-shim@^5.0.0:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/event-target-shim/-/event-target-shim-5.0.1.tgz#5d4d3ebdf9583d63a5333ce2deb7480ab2b05789"
+  integrity sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==
+
 events@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/events/-/events-3.2.0.tgz#93b87c18f8efcd4202a461aec4dfc0556b639379"
@@ -730,6 +750,15 @@ form-data@^2.5.0:
   dependencies:
     asynckit "^0.4.0"
     combined-stream "^1.0.6"
+    mime-types "^2.1.12"
+
+form-data@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/form-data/-/form-data-3.0.0.tgz#31b7e39c85f1355b7139ee0c647cf0de7f83c682"
+  integrity sha512-CKMFDglpbMi6PyN+brwB9Q/GOw0eAnsrEZDgcsH5Krhz5Od/haKHAX0NmQfha2zPPz0JpWzA7GJHGSnvCRLWsg==
+  dependencies:
+    asynckit "^0.4.0"
+    combined-stream "^1.0.8"
     mime-types "^2.1.12"
 
 form-data@~2.3.2:
@@ -1265,6 +1294,11 @@ node-abi@^2.18.0, node-abi@^2.7.0:
   integrity sha512-yi05ZoiuNNEbyT/xXfSySZE+yVnQW6fxPZuFbLyS1s6b5Kw3HzV2PHOM4XR+nsjzkHxByK+2Wg+yCQbe35l8dw==
   dependencies:
     semver "^5.4.1"
+
+node-fetch@^2.6.0:
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.0.tgz#e633456386d4aa55863f676a7ab0daa8fdecb0fd"
+  integrity sha512-8dG4H5ujfvFiqDmVu9fQ5bOHUC15JMjMY/Zumv26oOvvVJjM67KF8koCWIabKQ1GJIa9r2mMZscBq/TbdOcmNA==
 
 node-hid@^1.3.0:
   version "1.3.0"
@@ -1946,10 +1980,10 @@ tunnel-agent@^0.6.0:
   dependencies:
     safe-buffer "^5.0.1"
 
-turtlecoin-base58@0.0.7:
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/turtlecoin-base58/-/turtlecoin-base58-0.0.7.tgz#ca7a152e5df79f4f943b7dc0cab44862fb851a4d"
-  integrity sha512-pPU37R2kcW26iJ53s5JTK4iUpx7AGDdoUa+/Mgr7Re1FavlQDHDF4VGhhSFDxtiNT1HjA49/M5f7m+5J2IZYUA==
+turtlecoin-base58@0.0.8:
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/turtlecoin-base58/-/turtlecoin-base58-0.0.8.tgz#26ac7276062c464cc0ffff78265453d5322313fe"
+  integrity sha512-eLZG/fDPKQET/NsKFiP6rBn0SdDeqYvhpcCd+5kTn+c+5yFV/9hlYzwwUfW6CCN0spJQZaDQXMGHHYcw0hTmDQ==
   dependencies:
     big-integer "^1.6.48"
 
@@ -1963,32 +1997,35 @@ turtlecoin-crypto@^6.0.2:
     nan "^2.14.1"
     prebuild-install "^5.3.5"
 
-turtlecoin-mnemonics@0.0.8:
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/turtlecoin-mnemonics/-/turtlecoin-mnemonics-0.0.8.tgz#21e938db5cc00fa5f3c99dee7dec3136913ccc21"
-  integrity sha512-Vdxol/nphJggi9DaMSbv/Oq+iksA6R4TTy9vt9c79oJ39aqzmZRqTv1+C6HtIvy/5h0ouucg+NpNtTywTQVx5A==
+turtlecoin-mnemonics@0.0.9:
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/turtlecoin-mnemonics/-/turtlecoin-mnemonics-0.0.9.tgz#9844405ca150b4cf6ee5c16847e1e75caad1285e"
+  integrity sha512-QN1T3PpMiu7T7oX+yLzlPRSgvaxYTlJsUyTkA2uVDDNBKcc2zJruL6blGfHKg4hLN9lCt8EerbRM0cLremeBlQ==
   dependencies:
     crc "^3.8.0"
     get-random-values "^1.2.0"
 
-turtlecoin-utils@turtlecoin/turtlecoin-utils#047593d981b7a98c9ab66f92a6daa69efb32097b:
-  version "3.0.0"
-  resolved "https://codeload.github.com/turtlecoin/turtlecoin-utils/tar.gz/047593d981b7a98c9ab66f92a6daa69efb32097b"
+turtlecoin-utils@^3.0.3:
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/turtlecoin-utils/-/turtlecoin-utils-3.0.3.tgz#f52c587e03b687e0744116f0b87535eb7b25f6b3"
+  integrity sha512-EFyBSPJDihQkDABIpHGFH/NMdMty1F78w8onaYhtfMl5tiF22pOZVBK2+opW+n3uP0n8S9bYkLSOcxUJ3vT9WQ==
   dependencies:
     "@ledgerhq/hw-transport" "^5.22.0"
     "@types/ledgerhq__hw-transport" "^4.21.2"
+    "@types/node-fetch" "^2.5.7"
+    abort-controller "^3.0.0"
     aes-js "^3.1.2"
     big-integer "^1.6.48"
-    bytestream-helper "0.0.9"
+    bytestream-helper "0.0.10"
     get-random-values "^1.2.0"
+    node-fetch "^2.6.0"
     numeral "^2.0.6"
     semver "^7.3.2"
-    turtlecoin-base58 "0.0.7"
+    turtlecoin-base58 "0.0.8"
     turtlecoin-crypto "^6.0.2"
-    turtlecoin-mnemonics "0.0.8"
+    turtlecoin-mnemonics "0.0.9"
   optionalDependencies:
     "@ledgerhq/hw-transport-node-hid" "^5.22.0"
-    "@types/ledgerhq__hw-transport-node-hid" "^4.22.1"
 
 tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
