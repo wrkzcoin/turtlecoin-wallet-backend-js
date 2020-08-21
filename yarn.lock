@@ -1525,8 +1525,6 @@ rxjs@^6.6.2:
   version "6.6.2"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-6.6.2.tgz#8096a7ac03f2cc4fe5860ef6e572810d9e01c0d2"
   integrity sha512-BHdBMVoWC2sL26w//BCu3YzKT4s2jip/WhwsGEDmeKYBhKDZeYezVUnHatYB7L85v5xs0BAQmg6BEYJEKxBabg==
-  dependencies:
-    tslib "^1.9.0"
 
 safe-buffer@^5.0.1, safe-buffer@^5.1.2, safe-buffer@^5.2.0, safe-buffer@~5.2.0:
   version "5.2.1"
@@ -1856,7 +1854,7 @@ turtlecoin-base58@^0.0.6:
 
 "turtlecoin-crypto@https://github.com/wrkzcoin/turtlecoin-crypto.git":
   version "4.0.9"
-  resolved "https://github.com/wrkzcoin/turtlecoin-crypto.git#9ba598faaff2ab546bb9c6202b2454cbe0967f58"
+  resolved "https://github.com/wrkzcoin/turtlecoin-crypto.git#3f9e01e23672f55c18afd2a03ce60365ea66d430"
   dependencies:
     bindings "^1.5.0"
     js-sha3 "^0.8.0"
@@ -1991,7 +1989,7 @@ wrappy@1:
 
 "wrkzcoin-utils@https://github.com/wrkzcoin/wrkzcoin-utils.git":
   version "2.0.0"
-  resolved "https://github.com/wrkzcoin/wrkzcoin-utils.git#0b06e72b14d43f9f6890e45cab21a95b60ae6cf3"
+  resolved "https://github.com/wrkzcoin/wrkzcoin-utils.git#eb0ee290d47e87b1e77bfdc779591b2e4d320162"
   dependencies:
     aes-js "^3.1.2"
     big-integer "^1.6.48"
