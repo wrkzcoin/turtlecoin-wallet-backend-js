@@ -1856,7 +1856,7 @@ turtlecoin-base58@^0.0.6:
 
 "turtlecoin-crypto@https://github.com/wrkzcoin/turtlecoin-crypto.git":
   version "4.0.9"
-  resolved "https://github.com/wrkzcoin/turtlecoin-crypto.git#6eda64b6f483413e9568dadfd51c3b03c20aae7d"
+  resolved "https://github.com/wrkzcoin/turtlecoin-crypto.git#9ba598faaff2ab546bb9c6202b2454cbe0967f58"
   dependencies:
     bindings "^1.5.0"
     js-sha3 "^0.8.0"
@@ -1874,7 +1874,7 @@ turtlecoin-mnemonics@^0.0.6:
 
 "turtlecoin-utils@https://github.com/wrkzcoin/wrkzcoin-utils.git":
   version "2.0.0"
-  resolved "https://github.com/wrkzcoin/wrkzcoin-utils.git#b059eb461ea88bbb482757c130c66fc89436f0af"
+  resolved "https://github.com/wrkzcoin/wrkzcoin-utils.git#0b06e72b14d43f9f6890e45cab21a95b60ae6cf3"
   dependencies:
     aes-js "^3.1.2"
     big-integer "^1.6.48"
