@@ -3,7 +3,7 @@
 // Please see the included LICENSE file for more information.
 
 import * as _ from 'lodash';
-import { Address } from 'turtlecoin-utils';
+import { Address } from 'wrkzcoin-utils';
 
 import { FeeType } from './FeeType';
 import { CryptoUtils} from './CnUtils';

@@ -13,7 +13,7 @@ import {
     Transaction as UtilsTransaction,
     TransactionOutputs,
     TransactionInputs
-} from 'turtlecoin-utils';
+} from 'wrkzcoin-utils';
 
 import * as http from 'http';
 import * as https from 'https';
@@ -88,7 +88,7 @@ export declare interface Daemon {
      * only be emitted if the daemon is using /getrawblocks (All non blockchain
      * cache daemons should support this).
      *
-     * This block object is an instance of the [Block turtlecoin-utils class](https://utils.turtlecoin.dev/classes/block.html).
+     * This block object is an instance of the [Block wrkzcoin-utils class](https://utils.turtlecoin.dev/classes/block.html).
      * See the Utils docs for further info on using this value.
      *
      * Note that a block emitted after a previous one could potentially have a lower
@@ -111,7 +111,7 @@ export declare interface Daemon {
      * only be emitted if the daemon is using /getrawblocks (All non blockchain
      * cache daemons should support this).
      *
-     * This transaction object is an instance of the [Transaction turtlecoin-utils class](https://utils.turtlecoin.dev/classes/transaction.html).
+     * This transaction object is an instance of the [Transaction wrkzcoin-utils class](https://utils.turtlecoin.dev/classes/transaction.html).
      * See the Utils docs for further info on using this value.
      *
      * Note that a transaction emitted after a previous one could potentially have a lower

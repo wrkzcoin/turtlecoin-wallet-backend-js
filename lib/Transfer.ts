@@ -7,7 +7,7 @@ import * as _ from 'lodash';
 import {
     Transaction as CreatedTransaction, TransactionOutputs,
     Address, Interfaces,
-} from 'turtlecoin-utils';
+} from 'wrkzcoin-utils';
 
 import { Config } from './Config';
 import { FeeType } from './FeeType';
@@ -1286,7 +1286,7 @@ async function makeTransaction(
 
     try {
         logger.log(
-            `Asynchronously creating transaction with turtlecoin-utils`,
+            `Asynchronously creating transaction with wrkzcoin-utils`,
             LogLevel.DEBUG,
             LogCategory.TRANSACTIONS,
         );
@@ -1305,7 +1305,7 @@ async function makeTransaction(
         return [tx, undefined];
     } catch (err) {
         logger.log(
-            `Error while creating transaction with turtlecoin-utils: ${err.toString()}`,
+            `Error while creating transaction with wrkzcoin-utils: ${err.toString()}`,
             LogLevel.DEBUG,
             LogCategory.TRANSACTIONS,
         );
