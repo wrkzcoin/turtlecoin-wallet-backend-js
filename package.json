@@ -25,7 +25,7 @@
     "pbkdf2": "^3.0.17",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.8",
-    "wrkzcoin-utils": "https://github.com/wrkzcoin/wrkzcoin-utils.git",
+    "wrkzcoin-utils": "https://github.com/wrkzcoin/wrkzcoin-utils#dev",
     "typescript": "^3.8.3"
   },
   "devDependencies": {
