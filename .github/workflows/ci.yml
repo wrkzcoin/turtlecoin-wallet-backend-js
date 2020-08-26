@@ -1,0 +1,29 @@
+name: CI Build Tests
+
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: ['10', '11', '12', '13', '14']
+    name: ${{ matrix.os }} - Node ${{ matrix.node }} Test
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      name: Set up Node
+      with:
+        node-version: ${{ matrix.node }}
+        registry-url: 'https://registry.npmjs.org'
+    - name: Install Yarn
+      run: npm install -g yarn
+    - name: Install Dependencies
+      run: yarn
+    - name: Run Tests
+      run: yarn test-all
