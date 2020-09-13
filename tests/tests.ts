@@ -13,7 +13,7 @@ import { generateKeyDerivation, underivePublicKey } from '../lib/CryptoWrapper';
 
 const doPerformanceTests: boolean = process.argv.includes('--do-performance-tests');
 
-const daemonAddress = 'blockapi.turtlepay.io';
+const daemonAddress = 'wrkz.bot.tips';
 const daemonPort = 443;
 
 class Tester {
@@ -138,6 +138,8 @@ async function roundTrip(
         /* Load a new wallet from the dumped JSON */
         const [loadedWallet, error] = await WalletBackend.loadWalletFromJSON(daemon, initialJSON);
 
+        console.log(JSON.stringify(initialJSON));
+
         /* Re-dump to JSON  */
         const finalJSON = JSON.stringify(loadedWallet, null, 4);
 
@@ -258,6 +260,10 @@ async function roundTrip(
 
         const [seed, error2] = await (keyWallet as WalletBackend).getMnemonicSeed();
 
+        if (error2) {
+             console.log('Failed to load wallet: ' + error2.toString());
+        }
+
         return seed === 'skulls woozy ouch summon gifts huts waffle ourselves obtains ' +
                         'hexagon tadpoles hacksaw dormant hence abort listen history ' +
                         'atom cadets stylishly snout vegan girth guest history';
@@ -306,17 +312,17 @@ async function roundTrip(
 
         const address = (seedWallet as WalletBackend).getPrimaryAddress();
 
-        return address === 'TRTLv1s9JQeHAJFoHvcqVBPyHYom2ynKeK6dpYptbp8gQNzdzE73ZD' +
-                           'kNmNurqfhhcMSUXpS1ZGEJKiKJUcPCyw7vYaCc354DCN1';
+        return address === 'Wrkzf257qNFTPBBHRdFJMnFBi5GV4d8BV9PHLgKDVMzraC2YLfkjy' +
+                           'BX6N2PoUXXyN7Dyt3prMAq1p1QXd8nRaxZy8N9RMYCLzA';
 
     }, 'Verifying correct address is created from seed',
        'Seed wallet has correct address',
        'Seed wallet has incorrect address!');
 
     await tester.test(async () => {
-        const test1: boolean = prettyPrintAmount(12345607) === '123,456.07 TRTL';
-        const test2: boolean = prettyPrintAmount(0) === '0.00 TRTL';
-        const test3: boolean = prettyPrintAmount(-1234) === '-12.34 TRTL';
+        const test1: boolean = prettyPrintAmount(12345607) === '123,456.07 WRKZ';
+        const test2: boolean = prettyPrintAmount(0) === '0.00 WRKZ';
+        const test3: boolean = prettyPrintAmount(-1234) === '-12.34 WRKZ';
 
         return test1 && test2 && test3;
 
@@ -359,7 +365,7 @@ async function roundTrip(
         /* Not called wallet.start(), so node fee should be unset here */
         const [feeAddress, feeAmount] = wallet.getNodeFee();
 
-        return feeAddress === '' && feeAmount === 0;
+        return feeAddress === 'WrkzPkbMXmW7bgW9XEnNJUigxRJm5VT9cLD2tNJSxcdN1opYgi8KLV3ab9Z1AyfzFq6hJvKj4ZNKrcCs3gJE8XV7A8NkTp41y8' && feeAmount === 50000;
 
     }, 'Testing getNodeFee',
        'getNodeFee works',
@@ -416,19 +422,19 @@ async function roundTrip(
         let address;
         try {
         address = await createIntegratedAddress(
-            'TRTLv2Fyavy8CXG8BPEbNeCHFZ1fuDCYCZ3vW5H5LXN4K2M2MHUpTENip9bbavpHvvPwb4NDkBWrNgURAd5DB38FHXWZyoBh4wW',
+            'Wrkzf257qNFTPBBHRdFJMnFBi5GV4d8BV9PHLgKDVMzraC2YLfkjyBX6N2PoUXXyN7Dyt3prMAq1p1QXd8nRaxZy8N9RMYCLzA',
             'b23df6e84c1dd619d3601a28e5948d92a0d096aea1621969c591a90e986794a0',
         );
         } catch (err) {
             console.log(JSON.stringify(err));
         }
 
-        const test1: boolean = address === 'TRTLuyzDT8wJ6bAmnmBLyRHmBNrRrafuR9G3bJTNzPiTAS4xKDQKHd9Aa2sF2q22DF9EXi5HNpZGcHGBwqgVAqc2AZxUBMMSegm8CXG8BPEbNeCHFZ1fuDCYCZ3vW5H5LXN4K2M2MHUpTENip9bbavpHvvPwb4NDkBWrNgURAd5DB38FHXWZyhJk2yR';
+        const test1: boolean = address === 'WrkzWjHSN3PA6hoGpD7U4TA4jWsqJcMNQHFvdTeR5jxTHmHysQtbD68A6ZPr6J7X84Aa2XKVffuttAZoiGMgEA4G9m9ba7ohajRTPBBHRdFJMnFBi5GV4d8BV9PHLgKDVMzraC2YLfkjyBX6N2PoUXXyN7Dyt3prMAq1p1QXd8nRaxZy8N9RLNxnod';
 
         let test2: boolean = false;
 
         try {
-            await createIntegratedAddress('TRTLv2Fyavy8CXG8BPEbNeCHFZ1fuDCYCZ3vW5H5LXN4K2M2MHUpTENip9bbavpHvvPwb4NDkBWrNgURAd5DB38FHXWZyoBh4wW', '');
+            await createIntegratedAddress('Wrkzf257qNFTPBBHRdFJMnFBi5GV4d8BV9PHLgKDVMzraC2YLfkjyBX6N2PoUXXyN7Dyt3prMAq1p1QXd8nRaxZy8N9RMYCLzA', '');
         } catch (err) {
             test2 = true;
         }
