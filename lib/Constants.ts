@@ -182,3 +182,12 @@ export const FUSION_FEE_V1_HEIGHT = 864864;
  * Fusion Zero Fee Height
  */
 export const FUSION_ZERO_FEE_V2_HEIGHT = 1123000;
+
+/**
+ * Add a required unlock height on transactions
+ */
+export const UNLOCK_TIME_TRANSACTION_POOL_WINDOW = 40;
+
+export const MINIMUM_UNLOCK_TIME_BLOCKS  = 15;
+
+export const UNLOCK_TIME_HEIGHT = 1200000;
