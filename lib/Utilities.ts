@@ -12,8 +12,7 @@ import {
     CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE, MAX_BLOCK_NUMBER,
     MAX_BLOCK_SIZE_GROWTH_SPEED_DENOMINATOR,
     MAX_BLOCK_SIZE_GROWTH_SPEED_NUMERATOR, MAX_BLOCK_SIZE_INITIAL,
-    MAX_OUTPUT_SIZE_CLIENT, UNLOCK_TIME_TRANSACTION_POOL_WINDOW,
-    MINIMUM_UNLOCK_TIME_BLOCKS, UNLOCK_TIME_HEIGHT,
+    MAX_OUTPUT_SIZE_CLIENT,
 } from './Constants';
 
 import { validateAddresses, validatePaymentID } from './ValidateParameters';
@@ -119,26 +118,15 @@ export function getCurrentTimestampAdjusted(blockTargetTime: number = 30): numbe
 export function isInputUnlocked(unlockTime: number, currentHeight: number): boolean {
     /* Might as well return fast with the case that is true for nearly all
        transactions (excluding coinbase) */
-    
-    if (currentHeight >= UNLOCK_TIME_HEIGHT) {
-        if (unlockTime >= MAX_BLOCK_NUMBER) {
-            /* MINIMUM_UNLOCK_TIME_BLOCKS * DIFF TARGET */
-            return (Math.floor(Date.now() / 1000)) >= unlockTime + MINIMUM_UNLOCK_TIME_BLOCKS * 60;
-        /* Plus one for CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS */
-        } else {
-            return currentHeight + 1 >= unlockTime + MINIMUM_UNLOCK_TIME_BLOCKS;
-        }
-    } else {
-        if (unlockTime === 0) {
-            return true;
-        }
+    if (unlockTime === 0) {
+        return true;
+    }
 
-        if (unlockTime >= MAX_BLOCK_NUMBER) {
-            return (Math.floor(Date.now() / 1000)) >= unlockTime;
-        /* Plus one for CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS */
-        } else {
-            return currentHeight + 1 >= unlockTime;
-        }
+    if (unlockTime >= MAX_BLOCK_NUMBER) {
+        return (Math.floor(Date.now() / 1000)) >= unlockTime;
+    /* Plus one for CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS */
+    } else {
+        return currentHeight + 1 >= unlockTime;
     }
 }
 
