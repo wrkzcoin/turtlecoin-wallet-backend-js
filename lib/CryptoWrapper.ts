@@ -14,16 +14,8 @@ export async function generateKeyDerivation(
     transactionPublicKey: string,
     privateViewKey: string,
     config: Config): Promise<string> {
-
-    if (config.generateKeyDerivation) {
-        return config.generateKeyDerivation(transactionPublicKey, privateViewKey);
-    }
-
     try {
-        return TurtleCoinCrypto.generateKeyDerivation(
-            transactionPublicKey,
-            privateViewKey,
-        );
+        return CryptoUtils(config).generateKeyDerivation(transactionPublicKey, privateViewKey);
     } catch (err) {
         return nullKey;
     }

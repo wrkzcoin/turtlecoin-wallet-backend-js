@@ -28,10 +28,11 @@
     "pbkdf2": "^3.0.17",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.8",
-    "turtlecoin-utils": "turtlecoin/turtlecoin-utils#047593d981b7a98c9ab66f92a6daa69efb32097b",
+    "turtlecoin-utils": "^3.0.3",
     "typescript": "^3.8.3"
   },
   "devDependencies": {
+    "@types/ledgerhq__hw-transport-node-hid": "^4.22.1",
     "@types/lodash": "^4.14.149",
     "@types/node": "^14.0.27",
     "@types/pbkdf2": "^3.0.0",
@@ -53,5 +54,8 @@
     "hooks": {
       "pre-commit": "lint-staged"
     }
+  },
+  "optionalDependencies": {
+    "@ledgerhq/hw-transport-node-hid": "^5.22.0"
   }
 }
