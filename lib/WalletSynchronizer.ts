@@ -592,45 +592,53 @@ export class WalletSynchronizer extends EventEmitter {
 
         const inputs: [string, TransactionInput][] = [];
 
-        const derivation: string = await generateKeyDerivation(
-            rawTX.transactionPublicKey, this.privateViewKey, this.config,
-        );
-
-        const spendKeys: string[] = this.subWallets.getPublicSpendKeys();
-
-        for (const [outputIndex, output] of rawTX.keyOutputs.entries()) {
-            /* Derive the spend key from the transaction, using the previous
-               derivation */
-            const derivedSpendKey = await underivePublicKey(
-                derivation, outputIndex, output.key, this.config,
+        try {
+            const derivation: string = await generateKeyDerivation(
+                rawTX.transactionPublicKey, this.privateViewKey, this.config,
             );
 
-            /* See if the derived spend key matches any of our spend keys */
-            if (!_.includes(spendKeys, derivedSpendKey)) {
-                continue;
+            const spendKeys: string[] = this.subWallets.getPublicSpendKeys();
+
+            for (const [outputIndex, output] of rawTX.keyOutputs.entries()) {
+                /* Derive the spend key from the transaction, using the previous
+                   derivation */
+                const derivedSpendKey = await underivePublicKey(
+                    derivation, outputIndex, output.key, this.config,
+                );
+
+                /* See if the derived spend key matches any of our spend keys */
+                if (!_.includes(spendKeys, derivedSpendKey)) {
+                    continue;
+                }
+
+                /* The public spend key of the subwallet that owns this input */
+                const ownerSpendKey = derivedSpendKey;
+
+                /* Not spent yet! */
+                const spendHeight: number = 0;
+
+                const [keyImage, privateEphemeral] = await this.subWallets.getTxInputKeyImage(
+                    ownerSpendKey, derivation, outputIndex,
+                );
+
+                const txInput: TransactionInput = new TransactionInput(
+                    keyImage, output.amount, blockHeight,
+                    rawTX.transactionPublicKey, outputIndex, output.globalIndex,
+                    output.key, spendHeight, rawTX.unlockTime, rawTX.hash,
+                    privateEphemeral,
+                );
+
+                inputs.push([ownerSpendKey, txInput]);
             }
 
-            /* The public spend key of the subwallet that owns this input */
-            const ownerSpendKey = derivedSpendKey;
-
-            /* Not spent yet! */
-            const spendHeight: number = 0;
-
-            const [keyImage, privateEphemeral] = await this.subWallets.getTxInputKeyImage(
-                ownerSpendKey, derivation, outputIndex,
+            return inputs;
+        } catch (err) {
+            logger.log(
+                'Failed to generateKeyDerivation: ' + err.toString(),
+                LogLevel.DEBUG,
+                LogCategory.SYNC,
             );
-
-            const txInput: TransactionInput = new TransactionInput(
-                keyImage, output.amount, blockHeight,
-                rawTX.transactionPublicKey, outputIndex, output.globalIndex,
-                output.key, spendHeight, rawTX.unlockTime, rawTX.hash,
-                privateEphemeral,
-            );
-
-            inputs.push([ownerSpendKey, txInput]);
         }
-
-        return inputs;
     }
 
     private processCoinbaseTransaction(
