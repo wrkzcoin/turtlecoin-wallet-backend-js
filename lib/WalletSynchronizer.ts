@@ -588,7 +588,7 @@ export class WalletSynchronizer extends EventEmitter {
      */
     private async processTransactionOutputs(
         rawTX: RawCoinbaseTransaction,
-        blockHeight: number): Promise<[string, TransactionInput][]> {
+        blockHeight: number): Promise<[string, TransactionInput][] | undefined> {
 
         const inputs: [string, TransactionInput][] = [];
 
