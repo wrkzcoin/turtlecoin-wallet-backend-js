@@ -202,16 +202,24 @@ export class WalletSynchronizer extends EventEmitter {
 
         /* Process the coinbase tx if we're not skipping them for speed */
         if (processCoinbaseTransactions && block.coinbaseTransaction) {
-            inputs = inputs.concat(await this.processTransactionOutputs(
+            let inputs_outputs = await this.processTransactionOutputs(
                 block.coinbaseTransaction, block.blockHeight,
-            ));
+            ) || undefined;
+
+            if (inputs_outputs !== undefined) {
+                inputs = inputs.concat(inputs_outputs);
+            }
         }
 
         /* Process the normal txs */
         for (const tx of block.transactions) {
-            inputs = inputs.concat(await this.processTransactionOutputs(
+            let inputs_outputs = await this.processTransactionOutputs(
                 tx, block.blockHeight,
-            ));
+            ) || undefined;
+
+            if (inputs_outputs !== undefined) {
+                inputs = inputs.concat(inputs_outputs);
+            }
         }
 
         return inputs;
