@@ -639,6 +639,8 @@ export class WalletSynchronizer extends EventEmitter {
                 LogCategory.SYNC,
             );
         }
+
+        return undefined;
     }
 
     private processCoinbaseTransaction(
