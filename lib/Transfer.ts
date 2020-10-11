@@ -1371,45 +1371,22 @@ async function relayTransaction(
     daemon: Daemon,
     config: Config): Promise<[TX, undefined] | [undefined, WalletError]> {
 
-    let relaySuccess: boolean;
-    let errorMessage: string | undefined;
-
     logger.log(
         'Relaying transaction',
         LogLevel.DEBUG,
         LogCategory.TRANSACTIONS,
     );
 
-    try {
-        [relaySuccess, errorMessage] = await daemon.sendTransaction(tx.toString());
+    const error = await daemon.sendTransaction(tx.toString());
 
-    /* Timeout */
-    } catch (err) {
+    if (!_.isEqual(error, SUCCESS)) {
         logger.log(
-            `Caught exception relaying transaction, error: ${err.toString()}, return code: ${err.statusCode}`,
+            `Failed to relay transaction. ${error}`,
             LogLevel.DEBUG,
             LogCategory.TRANSACTIONS,
         );
 
-        if (err.statusCode === 504) {
-            return [undefined, new WalletError(WalletErrorCode.DAEMON_STILL_PROCESSING)];
-        }
-
-        return [undefined, new WalletError(WalletErrorCode.DAEMON_OFFLINE)];
-    }
-
-    if (!relaySuccess) {
-        const customMessage = errorMessage === undefined
-            ? ''
-            : `The daemon did not accept our transaction. Error: ${errorMessage}.`;
-
-        logger.log(
-            `Failed to relay transaction. ${customMessage}`,
-            LogLevel.DEBUG,
-            LogCategory.TRANSACTIONS,
-        );
-
-        return [undefined, new WalletError(WalletErrorCode.DAEMON_ERROR, customMessage)];
+        return [undefined, error];
     }
 
     logger.log(
