@@ -25,7 +25,7 @@ import { LogCategory, logger, LogLevel } from './Logger';
 import { SUCCESS, WalletError, WalletErrorCode } from './WalletError';
 
 import {
-    Block, TopBlock, DaemonType, DaemonConnection, RawCoinbaseTransaction,
+    Block, TopBlock, DaemonConnection, RawCoinbaseTransaction,
     RawTransaction, KeyOutput, KeyInput
 } from './Types';
 
@@ -84,9 +84,7 @@ export declare interface Daemon {
     ): this;
 
     /**
-     * This is emitted every time we download a block from the daemon. Will
-     * only be emitted if the daemon is using /getrawblocks (All non blockchain
-     * cache daemons should support this).
+     * This is emitted every time we download a block from the daemon.
      *
      * This block object is an instance of the [Block turtlecoin-utils class](https://utils.turtlecoin.dev/classes/block.html).
      * See the Utils docs for further info on using this value.
@@ -107,9 +105,7 @@ export declare interface Daemon {
     on(event: 'rawblock', callback: (block: UtilsBlock) => void): this;
 
     /**
-     * This is emitted every time we download a transaction from the daemon. Will
-     * only be emitted if the daemon is using /getrawblocks (All non blockchain
-     * cache daemons should support this).
+     * This is emitted every time we download a transaction from the daemon.
      *
      * This transaction object is an instance of the [Transaction turtlecoin-utils class](https://utils.turtlecoin.dev/classes/transaction.html).
      * See the Utils docs for further info on using this value.
@@ -153,16 +149,6 @@ export class Daemon extends EventEmitter {
      * Have we determined if we should be using ssl or not?
      */
     private sslDetermined: boolean = false;
-
-    /**
-     * Whether we're talking to a conventional daemon, or a blockchain cache API
-     */
-    private isCacheApi: boolean = false;
-
-    /**
-     * Have we determined if this is a cache API or not?
-     */
-    private isCacheApiDetermined: boolean = false;
 
     /**
      * The address node fees will go to
@@ -238,24 +224,18 @@ export class Daemon extends EventEmitter {
      * @param port The port to access the API on. Normally 11898 for a TurtleCoin
      *             daemon, 80 for a HTTP api, or 443 for a HTTPS api.
      *
-     * @param isCacheApi You can optionally specify whether this API is a
-     *                   blockchain cache API to save a couple of requests.
-     *                   If you're not sure, do not specify this parameter -
-     *                   we will work it out automatically.
-     *
      * @param ssl        You can optionally specify whether this API supports
      *                   ssl/tls/https to save a couple of requests.
      *                   If you're not sure, do not specify this parameter -
      *                   we will work it out automatically.
      */
-    constructor(host: string, port: number, isCacheApi?: boolean, ssl?: boolean) {
+    constructor(host: string, port: number, ssl?: boolean) {
         super();
 
         this.setMaxListeners(0);
 
         assertString(host, 'host');
         assertNumber(port, 'port');
-        assertBooleanOrUndefined(isCacheApi, 'isCacheApi');
         assertBooleanOrUndefined(ssl, 'ssl');
 
         this.host = host;
@@ -265,11 +245,6 @@ export class Daemon extends EventEmitter {
            https://github.com/nodejs/node/pull/23329 */
         if (/^(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/.test(this.host) && ssl === undefined) {
             ssl = false;
-        }
-
-        if (isCacheApi !== undefined) {
-            this.isCacheApi = isCacheApi;
-            this.isCacheApiDetermined = true;
         }
 
         if (ssl !== undefined) {
@@ -354,26 +329,15 @@ export class Daemon extends EventEmitter {
             return this.updateDaemonInfo();
         }
 
-        /* Are we talking to a cache API or not? */
-        if (!this.isCacheApiDetermined) {
-            if (info.isCacheApi !== undefined && _.isBoolean(info.isCacheApi)) {
-                this.isCacheApi = info.isCacheApi;
-                this.isCacheApiDetermined = true;
-            } else {
-                this.isCacheApi = false;
-                this.isCacheApiDetermined = true;
-            }
-        }
-
         /* Height returned is one more than the current height - but we
            don't want to overflow if the height returned is zero */
-        if (info.network_height !== 0) {
-            info.network_height--;
+        if (info.networkHeight !== 0) {
+            info.networkHeight--;
         }
 
         if (this.localDaemonBlockCount !== info.height
-         || this.networkBlockCount !== info.network_height) {
-            this.emit('heightchange', info.height, info.network_height);
+         || this.networkBlockCount !== info.networkHeight) {
+            this.emit('heightchange', info.height, info.networkHeight);
 
             this.lastUpdatedNetworkHeight = new Date();
             this.lastUpdatedLocalHeight = new Date();
@@ -388,11 +352,11 @@ export class Daemon extends EventEmitter {
         }
 
         this.localDaemonBlockCount = info.height;
-        this.networkBlockCount = info.network_height;
+        this.networkBlockCount = info.networkHeight;
 
-        this.peerCount = info.incoming_connections_count + info.outgoing_connections_count;
+        this.peerCount = info.incomingConnections + info.outgoingConnections;
 
-        this.lastKnownHashrate = info.difficulty / this.config.blockTargetTime;
+        this.lastKnownHashrate = info.hashrate;
     }
 
     /**
@@ -589,8 +553,6 @@ export class Daemon extends EventEmitter {
 
     public getConnectionInfo(): DaemonConnection {
         return {
-            daemonType: this.isCacheApi ? DaemonType.BlockchainCacheApi : DaemonType.ConventionalDaemon,
-            daemonTypeDetermined: this.isCacheApiDetermined,
             host: this.host,
             port: this.port,
             ssl: this.ssl,

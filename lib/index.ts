@@ -14,7 +14,7 @@ export {
 
 export { LogLevel, LogCategory } from './Logger';
 export { validateAddress, validateAddresses, validatePaymentID } from './ValidateParameters';
-export { TransactionInput, DaemonType, DaemonConnection } from './Types';
+export { TransactionInput, DaemonConnection } from './Types';
 export { MixinLimit, MixinLimits } from './MixinLimits';
 export { Config } from './Config';
 

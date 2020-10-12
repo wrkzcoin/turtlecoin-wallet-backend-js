@@ -6,7 +6,6 @@ import {
     Config,
     createIntegratedAddress,
     Daemon,
-    DaemonType,
     isValidMnemonic,
     isValidMnemonicWord,
     prettyPrintAmount,
@@ -522,8 +521,6 @@ async function roundTrip(
         await wallet.stop();
 
         return (_.isEqual(info, {
-            daemonType: DaemonType.BlockchainCacheApi,
-            daemonTypeDetermined: true,
             host: daemonAddress,
             port: daemonPort,
             ssl: true,
