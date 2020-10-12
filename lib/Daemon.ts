@@ -348,6 +348,10 @@ export class Daemon extends EventEmitter {
         this.localDaemonBlockCount = info.height;
         this.networkBlockCount = info.networkHeight;
 
+        if (this.networkBlockCount > 0) {
+            this.networkBlockCount--;
+        }
+
         this.peerCount = info.incomingConnections + info.outgoingConnections;
 
         this.lastKnownHashrate = info.hashrate;
