@@ -1457,6 +1457,7 @@ export class WalletBackend extends EventEmitter {
         }
 
         this.config.scanCoinbaseTransactions = shouldScan;
+        this.daemon.updateConfig(this.config.scanCoinbaseTransactions);
     }
 
     /**
@@ -3211,7 +3212,6 @@ export class WalletBackend extends EventEmitter {
         this.subWallets.initAfterLoad(this.config);
 
         this.setupMetronomes();
-
     }
 
     /**
