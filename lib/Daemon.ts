@@ -329,12 +329,6 @@ export class Daemon extends EventEmitter {
             return this.updateDaemonInfo();
         }
 
-        /* Height returned is one more than the current height - but we
-           don't want to overflow if the height returned is zero */
-        if (info.networkHeight !== 0) {
-            info.networkHeight--;
-        }
-
         if (this.localDaemonBlockCount !== info.height
          || this.networkBlockCount !== info.networkHeight) {
             this.emit('heightchange', info.height, info.networkHeight);
@@ -448,8 +442,8 @@ export class Daemon extends EventEmitter {
 
             const indexes: Map<string, number[]> = new Map();
 
-            for (const index of data.indexes) {
-                indexes.set(index.key, index.value);
+            for (const index of data) {
+                indexes.set(index.hash, index.indexes);
             }
 
             return indexes;
