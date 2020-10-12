@@ -4,7 +4,7 @@
 
 import { CryptoNote, LedgerNote, ICryptoNote } from 'turtlecoin-utils';
 import { Config } from './Config';
-import { isDeepStrictEqual } from 'util';
+import * as _ from 'lodash';
 
 /** @ignore */
 interface ICnUtilsCache {
@@ -22,7 +22,7 @@ const cached: ICnUtilsCache = {};
  * config will never update.
  */
 export function CryptoUtils(config: Config): ICryptoNote {
-    if (!isDeepStrictEqual(cached.config, config) || !cached.config || !cached.interface) {
+    if (!_.isEqual(cached.config, config) || !cached.config || !cached.interface) {
         cached.config = config;
 
         if (!config.ledgerTransport) {
