@@ -107,7 +107,7 @@ export function getUpperBound(val: number, nearestMultiple: number): number {
 export function getCurrentTimestampAdjusted(blockTargetTime: number = 30): number {
     const timestamp = Math.floor(Date.now() / 1000);
 
-    return timestamp - (100 * blockTargetTime);
+    return timestamp - (60 * 60 * 6);
 }
 
 /**
