@@ -1,8 +1,5 @@
 ![image](https://user-images.githubusercontent.com/34389545/35821974-62e0e25c-0a70-11e8-87dd-2cfffeb6ed47.png)
 
-#### Master Build Status
-[![Build Status](https://travis-ci.org/turtlecoin/turtlecoin-wallet-backend-js.svg?branch=master)](https://travis-ci.org/turtlecoin/turtlecoin-wallet-backend-js)
-
 #### NPM
 [![NPM](https://nodei.co/npm/turtlecoin-wallet-backend.png?compact=true)](https://npmjs.org/package/turtlecoin-wallet-backend)
 
@@ -49,7 +46,7 @@ const WB = require('turtlecoin-wallet-backend');
     /* OR
     const daemon = new WB.Daemon('blockapi.turtlepay.io', 443);
     */
-    
+
     const wallet = WB.WalletBackend.createWallet(daemon);
 
     console.log('Created wallet');
