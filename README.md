@@ -161,6 +161,17 @@ You can view available categories and log levels in the documentation.
 
 ## Changelog
 
+### v6.0.0
+
+* Supports v1.0.0 daemon API
+* No longer supports v0.28.3 daemon API
+* Supports using a ledger nano to control private keys
+* Can specify whether you want to sync with raw blocks or not when initializing daemon
+* Fix auto optimize disabling not working correctly
+* Warn users when using non native crypto
+* Can send extra data with tx
+* More prepared transaction functions
+
 ### v5.0.4
 
 * Sleeping between block download failures or when fully synced has been re-added, in a more effective way.
