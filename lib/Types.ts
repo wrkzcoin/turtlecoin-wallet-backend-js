@@ -19,15 +19,15 @@ export class Block {
         const block = Object.create(Block.prototype);
 
         return Object.assign(block, {
-            coinbaseTransaction: json.coinbaseTX ? RawCoinbaseTransaction.fromJSON(json.coinbaseTX) : undefined,
+            coinbaseTransaction: json.coinbaseTx ? RawCoinbaseTransaction.fromJSON(json.coinbaseTx) : undefined,
 
             transactions: json.transactions.map(RawTransaction.fromJSON),
 
-            blockHeight: Number(json.blockHeight),
+            blockHeight: Number(json.height),
 
-            blockHash: json.blockHash,
+            blockHash: json.hash,
 
-            blockTimestamp: Number(json.blockTimestamp),
+            blockTimestamp: Number(json.timestamp),
         });
     }
 
@@ -73,7 +73,7 @@ export class RawCoinbaseTransaction {
 
             hash: json.hash,
 
-            transactionPublicKey: json.txPublicKey,
+            transactionPublicKey: json.publicKey,
 
             unlockTime: Number(json.unlockTime),
         });
@@ -117,11 +117,11 @@ export class RawTransaction extends RawCoinbaseTransaction {
 
             hash: json.hash,
 
-            transactionPublicKey: json.txPublicKey,
+            transactionPublicKey: json.publicKey,
 
             unlockTime: Number(json.unlockTime),
 
-            paymentID: json.paymentID,
+            paymentID: json.paymentId,
 
             keyInputs: json.inputs.map(KeyInput.fromJSON),
         });
@@ -443,7 +443,6 @@ export class KeyOutput {
 
         return Object.assign(keyOutput, {
             amount: json.amount,
-            globalIndex: json.globalIndex,
             key: json.key,
         });
     }
@@ -454,8 +453,7 @@ export class KeyOutput {
     /* The output amount */
     public readonly amount: number;
 
-    /* The index of the amount in the DB. The blockchain cache api returns
-       this, but the regular daemon does not. */
+    /* The index of the amount in the DB. */
     public readonly globalIndex?: number;
 
     constructor(
@@ -476,8 +474,7 @@ export class KeyInput {
 
         return Object.assign(keyInput, {
             amount: json.amount,
-            keyImage: json.k_image,
-            outputIndexes: json.key_offsets,
+            keyImage: json.keyImage,
         });
     }
 
@@ -487,18 +484,12 @@ export class KeyInput {
     /* The key image of this input */
     public readonly keyImage: string;
 
-    /* The output indexes of the fake and real outputs this input was created
-       from, in the global 'DB' */
-    public readonly outputIndexes: number[];
-
     constructor(
         amount: number,
-        keyImage: string,
-        outputIndexes: number[]) {
+        keyImage: string) {
 
         this.amount = amount;
         this.keyImage = keyImage;
-        this.outputIndexes = outputIndexes;
     }
 }
 

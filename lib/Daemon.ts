@@ -217,6 +217,8 @@ export class Daemon extends EventEmitter {
      */
     private connected: boolean = true;
 
+    private useRawBlocks: boolean = true;
+
     /**
      * @param host The host to access the API on. Can be an IP, or a URL, for
      *             example, 1.1.1.1, or blockapi.turtlepay.io
@@ -229,7 +231,7 @@ export class Daemon extends EventEmitter {
      *                   If you're not sure, do not specify this parameter -
      *                   we will work it out automatically.
      */
-    constructor(host: string, port: number, ssl?: boolean) {
+    constructor(host: string, port: number, ssl?: boolean, useRawBlocks?: boolean) {
         super();
 
         this.setMaxListeners(0);
@@ -237,6 +239,7 @@ export class Daemon extends EventEmitter {
         assertString(host, 'host');
         assertNumber(port, 'port');
         assertBooleanOrUndefined(ssl, 'ssl');
+        assertBooleanOrUndefined(useRawBlocks, 'useRawBlocks');
 
         this.host = host;
         this.port = port;
@@ -250,6 +253,10 @@ export class Daemon extends EventEmitter {
         if (ssl !== undefined) {
             this.ssl = ssl;
             this.sslDetermined = true;
+        }
+
+        if (useRawBlocks !== undefined) {
+            this.useRawBlocks = useRawBlocks;
         }
     }
 
@@ -382,8 +389,10 @@ export class Daemon extends EventEmitter {
 
         let data;
 
+        const endpoint = this.useRawBlocks ? '/sync/raw' : '/sync';
+
         try {
-            [data] = await this.makePostRequest('/sync/raw', {
+            [data] = await this.makePostRequest(endpoint, {
                 count: this.blockCount,
                 checkpoints: blockHashCheckpoints,
                 skipCoinbaseTransactions: !this.config.scanCoinbaseTransactions,
@@ -424,11 +433,15 @@ export class Daemon extends EventEmitter {
             this.lastUpdatedLocalHeight = new Date();
         }
 
+        const blocks = this.useRawBlocks
+            ? await this.rawBlocksToBlocks(data.blocks)
+            : data.blocks.map(Block.fromJSON);
+
         if (data.synced && data.topBlock && data.topBlock.height && data.topBlock.hash) {
-            return [await this.rawBlocksToBlocks(data.blocks), data.topBlock];
+            return [blocks, data.topBlock];
         }
 
-        return [await this.rawBlocksToBlocks(data.blocks), true];
+        return [blocks, true];
     }
 
     /**
@@ -625,7 +638,6 @@ export class Daemon extends EventEmitter {
                         keyInputs.push(new KeyInput(
                             i.amount.toJSNumber(),
                             i.keyImage,
-                            i.keyOffsets.map((x) => x.toJSNumber()),
                         ));
                     }
                 }

@@ -14,6 +14,7 @@ import {
     WalletBackend,
     WalletError,
     WalletErrorCode,
+    LogLevel,
 } from '../lib/index';
 
 import {generateKeyDerivation, underivePublicKey} from '../lib/CryptoWrapper';
@@ -23,8 +24,8 @@ import {Test} from 'tslint';
 
 const doPerformanceTests: boolean = process.argv.includes('--do-performance-tests');
 
-const daemonAddress = 'blockapi.turtlepay.io';
-const daemonPort = 443;
+const daemonAddress = 'fastpool.xyz';
+const daemonPort = 11898;
 
 enum TestStatus {
     PASS,
@@ -150,7 +151,7 @@ async function roundTrip(
     const tester: Tester = new Tester();
 
     /* Setup a daemon */
-    const daemon: Daemon = new Daemon(daemonAddress, daemonPort);
+    const daemon: Daemon = new Daemon(daemonAddress, daemonPort, undefined, true);
 
     /* Begin testing */
     await tester.test(async () => {
@@ -378,7 +379,7 @@ async function roundTrip(
        'getMnemonicSeedForAddress doesn\'t work!');
 
     await tester.test(async () => {
-        const wallet = await WalletBackend.createWallet(daemon);
+        const wallet = await WalletBackend.createWallet(new Daemon(daemonAddress, daemonPort));
 
         /* Not called wallet.start(), so node fee should be unset here */
         const [feeAddress, feeAmount] = wallet.getNodeFee();
@@ -520,13 +521,9 @@ async function roundTrip(
 
         await wallet.stop();
 
-        return (_.isEqual(info, {
-            host: daemonAddress,
-            port: daemonPort,
-            ssl: true,
-            sslDetermined: true,
-        })) ? TestStatus.PASS : TestStatus.FAIL;
-
+        return info.host === daemonAddress && info.port === daemonPort && info.sslDetermined
+            ? TestStatus.PASS
+            : TestStatus.FAIL;
     }, 'Testing swapNode',
        'swapNode works',
        'swapNode doesn\'t work!');
@@ -667,7 +664,7 @@ async function roundTrip(
                 new Config(),
             );
 
-            const loopIterations: number = 6000;
+            const loopIterations: number = 1000;
 
             const startTime = new Date().getTime();
 
@@ -696,7 +693,7 @@ async function roundTrip(
            'underivePublicKey performance test failed!');
 
         await tester.test(async () => {
-            const loopIterations: number = 6000;
+            const loopIterations: number = 1000;
 
             const startTime = new Date().getTime();
 
