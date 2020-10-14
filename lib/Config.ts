@@ -5,9 +5,8 @@
 import { MixinLimit, MixinLimits } from './MixinLimits';
 import { LedgerTransport } from 'turtlecoin-utils';
 
-import * as pack from '../package.json';
-
-const version = pack.version;
+/* eslint-disable @typescript-eslint/no-var-requires */
+const version = require('../../package.json').version;
 
 /**
  * Configuration for the wallet backend.
