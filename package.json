@@ -1,6 +1,6 @@
 {
   "name": "turtlecoin-wallet-backend",
-  "version": "6.0.0",
+  "version": "5.0.4",
   "description": "",
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
