@@ -593,4 +593,4 @@ export enum WalletErrorCode {
  * if (someOperation === new WalletError(WalletErrorCode.SUCCESS))
  * ```
  */
-export let SUCCESS: WalletError = new WalletError(WalletErrorCode.SUCCESS);
+export const SUCCESS: WalletError = new WalletError(WalletErrorCode.SUCCESS);

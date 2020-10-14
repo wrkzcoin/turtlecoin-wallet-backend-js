@@ -2,7 +2,7 @@
 //
 // Please see the included LICENSE file for more information.
 
-// tslint:disable: max-line-length
+/* eslint-disable max-len */
 
 import {EventEmitter} from 'events';
 import {
@@ -1078,7 +1078,7 @@ export class WalletBackend extends EventEmitter {
         let timestamp = 0;
 
         if (newWallet) {
-            timestamp = getCurrentTimestampAdjusted(config.blockTargetTime);
+            timestamp = getCurrentTimestampAdjusted();
         }
 
         const walletSynchronizer = new WalletSynchronizer(
@@ -2621,7 +2621,7 @@ export class WalletBackend extends EventEmitter {
      * }
      *
      */
-    public async sendRawPreparedTransaction(rawTransaction: PreparedTransaction) {
+    public async sendRawPreparedTransaction(rawTransaction: PreparedTransaction): Promise<SendTransactionResult> {
         logger.log(
             'Function sendRawPreparedTransaction called',
             LogLevel.DEBUG,

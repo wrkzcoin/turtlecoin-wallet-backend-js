@@ -5,7 +5,9 @@
 import { MixinLimit, MixinLimits } from './MixinLimits';
 import { LedgerTransport } from 'turtlecoin-utils';
 
-const version = require('../../package.json').version;
+import * as pack from '../package.json';
+
+const version = pack.version;
 
 /**
  * Configuration for the wallet backend.

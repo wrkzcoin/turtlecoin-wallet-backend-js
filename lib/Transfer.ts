@@ -378,6 +378,10 @@ export async function sendTransactionBasic(
         undefined,
         undefined,
         paymentID,
+        undefined,
+        undefined,
+        relayToNetwork,
+        sendAll,
     );
 }
 
@@ -1606,7 +1610,7 @@ async function getRingParticipants(
 
     for (const amount of amounts) {
         /* Check each amount is present in outputs */
-        const foundOutputs = _.find(outs, ([outAmount, ignore]) => amount === outAmount);
+        const foundOutputs = _.find(outs, ([outAmount, ]) => amount === outAmount);
 
         if (foundOutputs === undefined) {
             return new WalletError(

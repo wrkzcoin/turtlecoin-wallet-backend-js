@@ -104,7 +104,7 @@ export function getUpperBound(val: number, nearestMultiple: number): number {
  *
  * @hidden
  */
-export function getCurrentTimestampAdjusted(blockTargetTime: number = 30): number {
+export function getCurrentTimestampAdjusted(): number {
     const timestamp = Math.floor(Date.now() / 1000);
 
     return timestamp - (60 * 60 * 6);
@@ -309,7 +309,7 @@ export async function isValidMnemonic(mnemonic: string, config: IConfig = new Co
 export function getMinimumTransactionFee(
     transactionSize: number,
     height: number,
-    config: IConfig = new Config()) {
+    config: IConfig = new Config()): number {
 
     const tempConfig: Config = MergeConfig(config);
 
@@ -325,7 +325,7 @@ export function getTransactionFee(
     transactionSize: number,
     height: number,
     feePerByte: number,
-    config: IConfig = new Config()) {
+    config: IConfig = new Config()): number {
 
     const tempConfig: Config = MergeConfig(config);
 
