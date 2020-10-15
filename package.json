@@ -24,7 +24,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "lodash": "^4.17.15",
-    "object-sizeof": "^1.6.0",
+    "object-sizeof": "https://github.com/zpalmtree/sizeof",
     "pbkdf2": "^3.0.17",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.8",

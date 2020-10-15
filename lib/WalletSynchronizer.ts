@@ -3,7 +3,7 @@
 // Please see the included LICENSE file for more information.
 
 import * as _ from 'lodash';
-import sizeof from 'object-sizeof';
+import { sizeof } from 'object-sizeof';
 
 import { EventEmitter } from 'events';
 
