@@ -24,6 +24,6 @@ jobs:
     - name: Install Yarn
       run: npm install -g yarn
     - name: Install Dependencies
-      run: yarn --scripts-prepend-node-path true
+      run: yarn --network-concurrency 1 --network-timeout 120000 --scripts-prepend-node-path true
     - name: Run Tests
       run: yarn test-all
