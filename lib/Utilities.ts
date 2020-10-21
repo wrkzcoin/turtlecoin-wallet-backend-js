@@ -19,6 +19,7 @@ import { validateAddresses, validatePaymentID } from './ValidateParameters';
 import { SUCCESS } from './WalletError';
 import { English } from './WordList';
 import { assertString, assertNumber } from './Assert';
+import { LogCategory, logger, LogLevel } from './Logger';
 
 /**
  * Creates an integrated address from a standard address, and a payment ID.
@@ -118,6 +119,13 @@ export function getCurrentTimestampAdjusted(blockTargetTime: number = 30): numbe
 export function isInputUnlocked(unlockTime: number, currentHeight: number): boolean {
     /* Might as well return fast with the case that is true for nearly all
        transactions (excluding coinbase) */
+
+    logger.log(
+        `Check transaction for isInputUnlocked unlockTime: ${unlockTime.toString()}, currentHeight: ${currentHeight.toString()}`,
+        LogLevel.DEBUG,
+        [LogCategory.SYNC, LogCategory.TRANSACTIONS],
+    );
+
     if (unlockTime === 0) {
         return true;
     }
@@ -126,7 +134,7 @@ export function isInputUnlocked(unlockTime: number, currentHeight: number): bool
         return (Math.floor(Date.now() / 1000)) >= unlockTime;
     /* Plus one for CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS */
     } else {
-        return currentHeight + 1 >= unlockTime;
+        return currentHeightcurrentHeight + 1 >= unlockTime;
     }
 }
 
