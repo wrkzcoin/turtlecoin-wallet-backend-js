@@ -134,6 +134,9 @@ export function isInputUnlocked(unlockTime: number, currentHeight: number): bool
         return (Math.floor(Date.now() / 1000)) >= unlockTime;
     /* Plus one for CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS */
     } else {
+        if (currentHeight === 0) {
+            currentHeight = unlockTime + 1;
+        }
         return (currentHeight + 1) >= unlockTime;
     }
 }
