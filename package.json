@@ -24,14 +24,15 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "lodash": "^4.17.15",
-    "object-sizeof": "^1.6.0",
+    "object-sizeof": "https://github.com/zpalmtree/sizeof",
     "pbkdf2": "^3.0.17",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.8",
     "wrkzcoin-utils": "https://github.com/wrkzcoin/wrkzcoin-utils#dev",
-    "typescript": "^3.8.3"
+    "typescript": "^4.0.3"
   },
   "devDependencies": {
+    "@types/ledgerhq__hw-transport-node-hid": "^4.22.1",
     "@types/lodash": "^4.14.149",
     "@types/node": "^14.0.27",
     "@types/pbkdf2": "^3.0.0",
@@ -53,5 +54,8 @@
     "hooks": {
       "pre-commit": "lint-staged"
     }
+  },
+  "optionalDependencies": {
+    "@ledgerhq/hw-transport-node-hid": "^5.22.0"
   }
 }
