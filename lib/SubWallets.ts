@@ -541,6 +541,12 @@ export class SubWallets {
                     }
                 }
             }
+
+            logger.log(
+                `Check transaction ${transaction.hash} for isInputUnlocked unlockedBalance: ${unlockedBalance.toString()}, lockedBalance: ${lockedBalance.toString()}`,
+                LogLevel.DEBUG,
+                [LogCategory.SYNC, LogCategory.TRANSACTIONS],
+            );
         }
 
         for (const transaction of this.lockedTransactions) {
