@@ -397,18 +397,8 @@ export class SubWallet {
         for (const input of this.unspentInputs) {
             if (isInputUnlocked(input.unlockTime, currentHeight)) {
                 unlockedBalance += input.amount;
-                logger.log(
-                    'getBalance unlockedBalance: ' + input.amount.toString() + ' at height: ' + currentHeight.toString(),
-                    LogLevel.DEBUG,
-                    LogCategory.TRANSACTIONS,
-                );
             } else {
                 lockedBalance += input.amount;
-                logger.log(
-                    'getBalance lockedBalance: ' + input.amount.toString() + ' at height: ' + currentHeight.toString(),
-                    LogLevel.DEBUG,
-                    LogCategory.TRANSACTIONS,
-                );
             }
         }
 
