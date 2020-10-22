@@ -543,7 +543,7 @@ export class SubWallets {
             }
 
             logger.log(
-                `Check transaction ${transaction.hash} for isInputUnlocked unlockedBalance: ${unlockedBalance.toString()}, lockedBalance: ${lockedBalance.toString()}`,
+                `Check transaction ${transaction.hash} for isInputUnlocked transaction.unlockTime: ${transaction.unlockTime.toString()}, currentHeight: ${currentHeight.toString()}, unlockedBalance: ${unlockedBalance.toString()}, lockedBalance: ${lockedBalance.toString()}`,
                 LogLevel.DEBUG,
                 [LogCategory.SYNC, LogCategory.TRANSACTIONS],
             );
