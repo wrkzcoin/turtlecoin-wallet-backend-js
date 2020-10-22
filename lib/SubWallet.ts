@@ -398,7 +398,11 @@ export class SubWallet {
             if (isInputUnlocked(input.unlockTime, currentHeight)) {
                 unlockedBalance += input.amount;
             } else {
-                lockedBalance += input.amount;
+                if (input.amount < 0) {
+                    unlockedBalance += input.amount;
+                } else {
+                    lockedBalance += input.amount;
+                }
             }
         }
 
