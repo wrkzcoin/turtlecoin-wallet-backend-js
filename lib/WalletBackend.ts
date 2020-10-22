@@ -2619,6 +2619,16 @@ export class WalletBackend extends EventEmitter {
 
         assertArrayOrUndefined(subWalletsToTakeFrom, 'subWalletsToTakeFrom');
 
+        while (this.daemon.getNetworkBlockCount() === 0) {
+            /** Sleep 2s if getNetworkBlockCount is 0 **/
+            logger.log(
+                'Sleep 1s and wait for getNetworkBlockCount...',
+                LogLevel.DEBUG,
+                LogCategory.GENERAL,
+            );
+            await sleep(1000);
+        }
+
         return this.subWallets.getBalance(
             this.daemon.getNetworkBlockCount(),
             subWalletsToTakeFrom,
