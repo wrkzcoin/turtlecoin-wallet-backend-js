@@ -120,25 +120,29 @@ export function isInputUnlocked(unlockTime: number, currentHeight: number): bool
     /* Might as well return fast with the case that is true for nearly all
        transactions (excluding coinbase) */
 
+    let result = false;
+
+    if (unlockTime === 0) {
+        result = true;
+    }
+
+    if (unlockTime >= MAX_BLOCK_NUMBER) {
+        result = (Math.floor(Date.now() / 1000)) >= unlockTime;
+    /* Plus one for CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS */
+    } else {
+        if (currentHeight === 0) {
+            result = false;
+        }
+        result = (currentHeight + 1) >= unlockTime;
+    }
+
     logger.log(
-        `Check transaction for isInputUnlocked unlockTime: ${unlockTime.toString()}, currentHeight: ${currentHeight.toString()}`,
+        `Check transaction for isInputUnlocked unlockTime: ${unlockTime.toString()}, currentHeight: ${currentHeight.toString()}, return ${result.toString()}`,
         LogLevel.DEBUG,
         [LogCategory.SYNC, LogCategory.TRANSACTIONS],
     );
 
-    if (unlockTime === 0) {
-        return true;
-    }
-
-    if (unlockTime >= MAX_BLOCK_NUMBER) {
-        return (Math.floor(Date.now() / 1000)) >= unlockTime;
-    /* Plus one for CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS */
-    } else {
-        if (currentHeight === 0) {
-            return false;
-        }
-        return (currentHeight + 1) >= unlockTime;
-    }
+    return result;
 }
 
 /**
