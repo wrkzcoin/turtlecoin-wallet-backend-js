@@ -137,7 +137,7 @@ export function isInputUnlocked(unlockTime: number, currentHeight: number): bool
         if (currentHeight === 0) {
             currentHeight = unlockTime - 1;
         }
-        return (currentHeight + 1) >= unlockTime;
+        return (currentHeight + 1) > unlockTime;
     }
 }
 
