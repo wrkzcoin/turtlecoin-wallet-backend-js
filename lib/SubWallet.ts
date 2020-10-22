@@ -400,7 +400,6 @@ export class SubWallet {
             } else {
                 if (input.amount < 0) {
                     unlockedBalance += input.amount;
-                    lockedBalance -= input.amount;
                 } else {
                     lockedBalance += input.amount;
                 }

@@ -539,7 +539,6 @@ export class SubWallets {
                     } else {
                         if (amount < 0) {
                             unlockedBalance += amount;
-                            lockedBalance -= amount;
                         } else {
                             lockedBalance += amount;
                         }
