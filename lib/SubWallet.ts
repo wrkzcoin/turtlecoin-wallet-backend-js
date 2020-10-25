@@ -406,12 +406,6 @@ export class SubWallet {
             }
         }
 
-        for (const input of this.spentInputs) {
-            if (!isInputUnlocked(input.unlockTime, currentHeight)) {
-                lockedBalance += Math.abs(input.amount);
-            }
-        }
-
         lockedBalance += _.sumBy(this.unconfirmedIncomingAmounts, 'amount');
 
         return [unlockedBalance, lockedBalance];
