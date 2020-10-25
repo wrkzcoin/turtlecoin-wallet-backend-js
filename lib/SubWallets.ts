@@ -537,10 +537,20 @@ export class SubWallets {
                     if (unlocked) {
                         unlockedBalance += amount;
                     } else {
-                        lockedBalance += amount;
+                        if (amount < 0) {
+                            unlockedBalance += amount;
+                        } else {
+                            lockedBalance += amount;
+                        }
                     }
                 }
             }
+
+            logger.log(
+                `Check transaction ${transaction.hash} for isInputUnlocked transaction.unlockTime: ${transaction.unlockTime.toString()}, currentHeight: ${currentHeight.toString()}, unlockedBalance: ${unlockedBalance.toString()}, lockedBalance: ${lockedBalance.toString()}`,
+                LogLevel.DEBUG,
+                [LogCategory.SYNC, LogCategory.TRANSACTIONS],
+            );
         }
 
         for (const transaction of this.lockedTransactions) {
