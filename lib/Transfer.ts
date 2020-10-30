@@ -40,10 +40,7 @@ import {
 
 import {
     PRETTY_AMOUNTS, FUSION_TX_MIN_INPUT_COUNT,
-    FUSION_TX_MIN_IN_OUT_COUNT_RATIO, MAX_FUSION_TX_SIZE, FUSION_FEE_V1,
-    FUSION_FEE_V1_HEIGHT, FUSION_ZERO_FEE_V2_HEIGHT,
-    UNLOCK_TIME_TRANSACTION_POOL_WINDOW,
-    MINIMUM_UNLOCK_TIME_BLOCKS, UNLOCK_TIME_HEIGHT,
+    FUSION_TX_MIN_IN_OUT_COUNT_RATIO, MAX_FUSION_TX_SIZE,
 } from './Constants';
 
 import { SUCCESS, WalletError, WalletErrorCode } from './WalletError';
@@ -178,10 +175,6 @@ export async function sendFusionTransactionAdvanced(
 
     /* Fusion transactions are free */
     let fee: number = 0;
-
-    if (daemon.getNetworkBlockCount() >= FUSION_FEE_V1_HEIGHT && daemon.getNetworkBlockCount() < FUSION_ZERO_FEE_V2_HEIGHT) {
-        fee = FUSION_FEE_V1;
-    }
 
     let fusionTX: CreatedTransaction;
 
@@ -1311,9 +1304,7 @@ async function makeTransaction(
 
         /* Add unlockTime instead of undefined */
         let unlockTime: number = 0;
-        if (daemon.getNetworkBlockCount() >= UNLOCK_TIME_HEIGHT) {
-            unlockTime = daemon.getNetworkBlockCount() + UNLOCK_TIME_TRANSACTION_POOL_WINDOW + MINIMUM_UNLOCK_TIME_BLOCKS;
-        }
+
         const tx = await CryptoUtils(config).createTransaction(
             destinations, ourOutputs, randomOuts as Interfaces.RandomOutput[][], mixin, fee,
             paymentID, unlockTime, extraData

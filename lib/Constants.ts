@@ -2,6 +2,8 @@
 //
 // Please see the included LICENSE file for more information.
 
+import { Config } from './Config';
+
 /**
  * What version of the file format are we on (to make it easier to
  * upgrade the wallet format in the future)
@@ -61,6 +63,13 @@ export const BLOCK_HASH_CHECKPOINTS_INTERVAL: number = 5000;
  * This value determines how many blocks to take from.
  */
 export const GLOBAL_INDEXES_OBSCURITY: number = 10;
+
+/**
+ * The maximum amount of blocks we can have waiting to be processed in
+ * the queue. If we exceed this, we will wait till it drops below this
+ * amount.
+ */
+export const MAXIMUM_SYNC_QUEUE_SIZE: number = 1000;
 
 /**
  * Used to determine whether an unlock time is a height, or a timestamp
@@ -166,28 +175,4 @@ export const FUSION_TX_MIN_IN_OUT_COUNT_RATIO = 4;
 /**
  * Max amount to create a single output of
  */
-export const MAX_OUTPUT_SIZE_CLIENT = 100000000000;
-
-/**
- * Fusion Fee
- */
-export const FUSION_FEE_V1 = 10000;
-
-/**
- * Fusion Fee Height
- */
-export const FUSION_FEE_V1_HEIGHT = 864864;
-
-/**
- * Fusion Zero Fee Height
- */
-export const FUSION_ZERO_FEE_V2_HEIGHT = 1123000;
-
-/**
- * Add a required unlock height on transactions
- */
-export const UNLOCK_TIME_TRANSACTION_POOL_WINDOW = 40;
-
-export const MINIMUM_UNLOCK_TIME_BLOCKS  = 15;
-
-export const UNLOCK_TIME_HEIGHT = 1200000;
+export const MAX_OUTPUT_SIZE_CLIENT = 100000000000000;

@@ -211,7 +211,7 @@ export class Config implements IConfig {
      * The address prefix your coin uses - you can find this in CryptoNoteConfig.h.
      * In TurtleCoin, this converts to TRTL
      */
-    public addressPrefix: number = 999730;
+    public addressPrefix: number = 8411;
 
     /**
      * Request timeout for daemon operations in milliseconds
@@ -248,7 +248,7 @@ export class Config implements IConfig {
     /**
      * Your coins 'ticker', generally used to refer to the coin, i.e. 123 TRTL
      */
-    public ticker: string = 'WRKZ';
+    public ticker: string = 'DEGO';
 
     /**
      * Most people haven't mined any blocks, so lets not waste time scanning
@@ -290,14 +290,14 @@ export class Config implements IConfig {
     /**
      * The length of a standard address for your coin
      */
-    public standardAddressLength: number = 98;
+    public standardAddressLength: number = 97;
 
     /* The length of an integrated address for your coin - It's the same as
        a normal address, but there is a paymentID included in there - since
        payment ID's are 64 chars, and base58 encoding is done by encoding
        chunks of 8 chars at once into blocks of 11 chars, we can calculate
        this automatically */
-    public integratedAddressLength: number = 98 + ((64 * 11) / 8);
+    public integratedAddressLength: number = 97 + ((64 * 11) / 8);
 
     /**
      * A replacement function for the JS/C++ underivePublicKey.
