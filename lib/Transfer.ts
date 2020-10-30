@@ -174,21 +174,9 @@ export async function sendFusionTransactionAdvanced(
     const paymentID: string = '';
 
     /* Fusion transactions are free */
-    let fee: number = 0;
+    const fee: number = 0;
 
     let fusionTX: CreatedTransaction;
-
-    /* Not enough unspent inputs for a fusion TX, we're fully optimized */
-    if (fee > foundMoney) {
-        logger.log(
-            'Wallet is fully optimized, cancelling fusion transaction',
-            LogLevel.DEBUG,
-            LogCategory.TRANSACTIONS,
-        );
-
-        returnValue.error = new WalletError(WalletErrorCode.FULLY_OPTIMIZED);
-        return returnValue;
-    }
 
     while (true) {
         logger.log(
@@ -210,7 +198,7 @@ export async function sendFusionTransactionAdvanced(
         }
 
         /* Amount of the transaction */
-        const amount = _.sumBy(ourInputs, (input) => input.input.amount) - fee;
+        const amount = _.sumBy(ourInputs, (input) => input.input.amount);
 
         /* Number of outputs this transaction will create */
         const numOutputs = splitAmountIntoDenominations(amount).length;
@@ -1302,12 +1290,9 @@ async function makeTransaction(
             LogCategory.TRANSACTIONS,
         );
 
-        /* Add unlockTime instead of undefined */
-        let unlockTime: number = 0;
-
         const tx = await CryptoUtils(config).createTransaction(
             destinations, ourOutputs, randomOuts as Interfaces.RandomOutput[][], mixin, fee,
-            paymentID, unlockTime, extraData
+            paymentID, undefined, extraData
         );
 
         logger.log(
