@@ -537,20 +537,10 @@ export class SubWallets {
                     if (unlocked) {
                         unlockedBalance += amount;
                     } else {
-                        if (amount < 0) {
-                            unlockedBalance += amount;
-                        } else {
-                            lockedBalance += amount;
-                        }
+                        lockedBalance += amount;
                     }
                 }
             }
-
-            logger.log(
-                `Check transaction ${transaction.hash} for isInputUnlocked transaction.unlockTime: ${transaction.unlockTime.toString()}, currentHeight: ${currentHeight.toString()}, unlockedBalance: ${unlockedBalance.toString()}, lockedBalance: ${lockedBalance.toString()}`,
-                LogLevel.DEBUG,
-                [LogCategory.SYNC, LogCategory.TRANSACTIONS],
-            );
         }
 
         for (const transaction of this.lockedTransactions) {
@@ -736,7 +726,7 @@ export class SubWallets {
 
         const inputsToUse: TxInputAndOwner[] = [];
 
-        // tslint:disable-next-line: max-line-length
+        // eslint-disable-next-line max-len
         /* See https://github.com/turtlecoin/turtlecoin/blob/153c08c3a046434522f7ac3ddd043037888b2bf5/src/CryptoNoteCore/Currency.cpp#L629 */
         /* With 3 mixin == 314 bytes. */
         const inputSize = 1 + (6 + 2) + 32 + 64 + 1 + 4 + mixin * (4 + 64);
