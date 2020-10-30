@@ -3,7 +3,7 @@
 // Please see the included LICENSE file for more information.
 
 import * as _ from 'lodash';
-const sizeof = require('object-sizeof');
+import { sizeof } from 'object-sizeof';
 
 import { EventEmitter } from 'events';
 
@@ -149,7 +149,7 @@ export class WalletSynchronizer extends EventEmitter {
 
     public processBlock(
         block: Block,
-        ourInputs: [string, TransactionInput][]) {
+        ourInputs: [string, TransactionInput][]): TransactionData {
 
         const txData: TransactionData = new TransactionData();
 
