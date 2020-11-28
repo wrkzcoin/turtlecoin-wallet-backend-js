@@ -161,6 +161,20 @@ You can view available categories and log levels in the documentation.
 
 ## Changelog
 
+
+### v6.0.3
+
+* Update turtlecoin-utils
+* New events emitted when a ledger is waiting for user input
+
+### v6.0.2
+
+* Fix object-sizeof being incorrectly imported
+
+### v6.0.2
+
+* Fix bug where package.json was not correctly read in npm release
+
 ### v6.0.0
 
 * Supports v1.0.0 daemon API
