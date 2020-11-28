@@ -344,11 +344,55 @@ export declare interface WalletBackend {
      * ```javascript
      * wallet.on('autooptimizeError', (error) => {
      *     console.error('Error: ', error);
-     * }
+     * });
+     *```
      *
      * @event This is emitted when an error occurs during auto optimization
      */
     on(event: 'autoOptimizeError', callback: (error: Error) => void): this;
+
+    /**
+     * This is emitted when the underlying cryptographic primitives (aka. Ledger Device) is likely waiting for the user to manually confirm a request
+     *
+     * Example:
+     * ```javascript
+     * wallet.on('user_confirm', () => {
+     *     console.warn('Awaiting manual user intervention');
+     * });
+     * ```
+     * @param event
+     * @param callback
+     */
+    on(event: 'user_confirm', callback: () => void): this;
+
+    /**
+     * This is emitted when the underlying cryptographic primitives (aka. Ledger Device) returns data to us
+     *
+     * Example:
+     * ```javascript
+     * wallet.on('transport_send', (data) => {
+     *     console.warn('Received data: %s', data);;
+     * });
+     * ```
+     *
+     * @param event
+     * @param callback
+     */
+    on(event: 'transport_receive', callback: (data: string) => void): this;
+
+    /**
+     * This is emitted when we send data to the underlying cryptographic primitives (aka. Ledger Device)
+     *
+     * Example:
+     * ```javascript
+     * wallet.on('transport_send', (data) => {
+     *     console.warn('Sent data: %s', data);;
+     * });
+     * ```
+     * @param event
+     * @param callback
+     */
+    on(event: 'transport_send', callback: (data:string) => void): this;
 }
 
 /**
@@ -3330,6 +3374,22 @@ export class WalletBackend extends EventEmitter {
                 this.emit('deadnode');
             }
         });
+
+        /**
+         *  Bubble up the events from the utils library; however, first
+         *  we need to clear any existing listeners for this method as we don't want
+         *  to create a memory leak if the setupEventHandlers method is called
+         *  multiple times
+         */
+        CryptoUtils(this.config).removeAllListeners();
+
+        CryptoUtils(this.config).on('user_confirm', () => this.emit('user_confirm'));
+
+        CryptoUtils(this.config).on('transport_receive',
+            (data: string) => this.emit('transport_receive', data));
+
+        CryptoUtils(this.config).on('transport_send',
+            (data: string) => this.emit('transport_send', data));
     }
 
     /**

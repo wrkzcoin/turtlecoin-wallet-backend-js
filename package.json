@@ -28,7 +28,7 @@
     "pbkdf2": "^3.0.17",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.8",
-    "turtlecoin-utils": "^3.0.3",
+    "turtlecoin-utils": "^3.0.7",
     "typescript": "^4.0.3"
   },
   "devDependencies": {
