@@ -27,7 +27,7 @@ jobs:
       run: npm install -g yarn
 
     - name: Install Dependencies
-      run: yarn --scripts-prepend-node-path true
+      run: yarn --scripts-prepend-node-path true --network-concurrency 1
 
     - name: Run Tests
       run: yarn test-all
