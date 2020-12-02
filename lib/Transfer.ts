@@ -1272,9 +1272,9 @@ async function makeTransaction(
                 publicEphemeral: '', // Required by compiler, not used in func
                 transactionKeys: {
                     derivedKey: '',
-                    outputIndex: 0,
-                    publicKey: '',
-                }, // again required by compiler but not used in func
+                    outputIndex: input.input.transactionIndex,
+                    publicKey: input.input.transactionPublicKey,
+                },
             },
             key: input.input.key,
             keyImage: input.input.keyImage,
