@@ -592,6 +592,10 @@ export class WalletSynchronizer extends EventEmitter {
 
         const inputs: [string, TransactionInput][] = [];
 
+        if (rawTX.transactionPublicKey === undefined) {
+            return inputs;
+        }
+
         const derivation: string = await generateKeyDerivation(
             rawTX.transactionPublicKey, this.privateViewKey, this.config,
         );
