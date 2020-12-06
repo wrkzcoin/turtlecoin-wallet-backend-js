@@ -161,6 +161,10 @@ You can view available categories and log levels in the documentation.
 
 ## Changelog
 
+### v6.0.5
+
+* Fix issue halting sync when transaction is missing a transaction public key
+
 ### v6.0.4
 
 * Fix issue generating transactions with a ledger
