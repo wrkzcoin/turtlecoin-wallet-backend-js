@@ -29,5 +29,8 @@ jobs:
     - name: Install Dependencies
       run: yarn --scripts-prepend-node-path true --network-concurrency 1
 
+    - name: Run Linter
+      run: yarn style
+
     - name: Run Tests
       run: yarn test-all
