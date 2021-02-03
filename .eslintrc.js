@@ -14,6 +14,6 @@ module.exports = {
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       'no-constant-condition': 'off',
-      'indent': ['error', 4, { 'SwitchCase': 1 }],
+      'indent': ['error', 4, { 'SwitchCase': 1, 'MemberExpression': 2 }],
   }
 };
