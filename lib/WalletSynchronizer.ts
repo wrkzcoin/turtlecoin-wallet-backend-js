@@ -648,8 +648,8 @@ export class WalletSynchronizer extends EventEmitter {
 
         const relevantInputs: [string, TransactionInput][]
             = _.filter(ourInputs, ([, input]) => {
-            return input.parentTransactionHash === rawTX.hash;
-        });
+                return input.parentTransactionHash === rawTX.hash;
+            });
 
         for (const [publicSpendKey, input] of relevantInputs) {
             transfers.set(
@@ -685,8 +685,8 @@ export class WalletSynchronizer extends EventEmitter {
 
         const relevantInputs: [string, TransactionInput][]
             = _.filter(ourInputs, ([, input]) => {
-            return input.parentTransactionHash === rawTX.hash;
-        });
+                return input.parentTransactionHash === rawTX.hash;
+            });
 
         for (const [publicSpendKey, input] of relevantInputs) {
             transfers.set(

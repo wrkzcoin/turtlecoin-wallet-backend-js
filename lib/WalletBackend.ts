@@ -1964,7 +1964,7 @@ export class WalletBackend extends EventEmitter {
     public internal(): {
         sync: (sleep: boolean) => Promise<boolean>;
         updateDaemonInfo: () => Promise<void>;
-    } {
+        } {
         logger.log(
             'Function internal called',
             LogLevel.DEBUG,
@@ -3076,7 +3076,7 @@ export class WalletBackend extends EventEmitter {
 
             if (this.shouldPerformAutoOptimize && this.autoOptimize) {
                 this.performAutoOptimize()
-                    .catch(error => this.emit('autoOptimizeError', error));
+                        .catch(error => this.emit('autoOptimizeError', error));
             }
         } else {
 

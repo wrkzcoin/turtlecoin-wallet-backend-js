@@ -513,7 +513,7 @@ export class TxInputAndOwner {
     /* The input */
     public readonly input: TransactionInput;
 
-   /* The private spend key of the input owner */
+    /* The private spend key of the input owner */
     public readonly privateSpendKey: string;
 
     /* The public spend key of the input owner */

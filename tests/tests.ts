@@ -108,15 +108,15 @@ async function encryptDecryptWallet(
     wallet: WalletBackend,
     daemon: Daemon,
     password: string): Promise<boolean> {
-        const encryptedString = wallet.encryptWalletToString(password);
-        const [, error] = await WalletBackend.openWalletFromEncryptedString(daemon, encryptedString, password);
+    const encryptedString = wallet.encryptWalletToString(password);
+    const [, error] = await WalletBackend.openWalletFromEncryptedString(daemon, encryptedString, password);
 
-        if (error) {
-            return false;
-        }
-
-        return true;
+    if (error) {
+        return false;
     }
+
+    return true;
+}
 
 async function roundTrip(
     wallet: WalletBackend,
@@ -167,8 +167,8 @@ async function roundTrip(
 
         return (initialJSON === finalJSON) ? TestStatus.PASS : TestStatus.FAIL;
     }, 'Checking wallet JSON serialization',
-       'Wallet serialization was successful',
-       'Initial JSON is not equal to final json!');
+    'Wallet serialization was successful',
+    'Initial JSON is not equal to final json!');
 
     await tester.test(async () => {
         /* Load a test file to check compatibility with C++ wallet backend */
@@ -178,8 +178,8 @@ async function roundTrip(
 
         return (error === undefined) ? TestStatus.PASS : TestStatus.FAIL;
     }, 'Loading test wallet file',
-       'Wallet loading succeeded',
-       'Wallet loading failed');
+    'Wallet loading succeeded',
+    'Wallet loading failed');
 
     await tester.test(async () => {
         try {
@@ -202,8 +202,8 @@ async function roundTrip(
 
         return TestStatus.PASS;
     }, 'Checking can open saved file',
-       'Can open saved file',
-       'Can\'t open saved file!');
+    'Can open saved file',
+    'Can\'t open saved file!');
 
     await tester.test(async () => {
         const wallet = await WalletBackend.createWallet(daemon);
@@ -241,16 +241,16 @@ async function roundTrip(
         return (test1 && test2 && test3 && test4 && test5 && test6) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Verifying special passwords work as expected',
-       'Special passwords work as expected',
-       'Special passwords do not work as expected!');
+    'Special passwords work as expected',
+    'Special passwords do not work as expected!');
 
     await tester.test(async () => {
         const wallet = await WalletBackend.createWallet(daemon);
 
         return (await encryptDecryptWallet(wallet, daemon, 'password')) ? TestStatus.PASS : TestStatus.FAIL;
     },  'Verifying wallet encryption and decryption work as expected',
-        'Encrypt/Decrypt wallet works as expected',
-        'Encrypt/Decrypt wallet does not work as expected!');
+    'Encrypt/Decrypt wallet works as expected',
+    'Encrypt/Decrypt wallet does not work as expected!');
 
     await tester.test(async () => {
         const [seedWallet, ] = await WalletBackend.importWalletFromSeed(
@@ -268,8 +268,8 @@ async function roundTrip(
             TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Verifying seed restore works correctly',
-       'Mnemonic seed wallet has correct keys',
-       'Mnemonic seed wallet has incorrect keys!');
+    'Mnemonic seed wallet has correct keys',
+    'Mnemonic seed wallet has incorrect keys!');
 
     await tester.test(async () => {
         const [keyWallet, ] = await WalletBackend.importWalletFromKeys(
@@ -285,8 +285,8 @@ async function roundTrip(
                         'atom cadets stylishly snout vegan girth guest history') ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Verifying key restore works correctly',
-       'Deterministic key wallet has correct seed',
-       'Deterministic key wallet has incorrect seed!');
+    'Deterministic key wallet has correct seed',
+    'Deterministic key wallet has incorrect seed!');
 
     await tester.test(async () => {
         const [keyWallet, ] = await WalletBackend.importWalletFromKeys(
@@ -301,8 +301,8 @@ async function roundTrip(
             TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Verifying non deterministic wallet doesn\'t create seed',
-       'Non deterministic wallet has no seed',
-       'Non deterministic wallet has seed!');
+    'Non deterministic wallet has no seed',
+    'Non deterministic wallet has seed!');
 
     await tester.test(async () => {
         const [viewWallet, ] = await WalletBackend.importViewWallet(
@@ -316,8 +316,8 @@ async function roundTrip(
         return (privateSpendKey === '0'.repeat(64)) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Verifying view wallet has null private spend key',
-       'View wallet has null private spend key',
-       'View wallet has private spend key!');
+    'View wallet has null private spend key',
+    'View wallet has private spend key!');
 
     await tester.test(async () => {
         const [seedWallet, ] = await WalletBackend.importWalletFromSeed(
@@ -333,8 +333,8 @@ async function roundTrip(
                            'kNmNurqfhhcMSUXpS1ZGEJKiKJUcPCyw7vYaCc354DCN1') ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Verifying correct address is created from seed',
-       'Seed wallet has correct address',
-       'Seed wallet has incorrect address!');
+    'Seed wallet has correct address',
+    'Seed wallet has incorrect address!');
 
     await tester.test(async () => {
         const test1: boolean = prettyPrintAmount(12345607) === '123,456.07 TRTL';
@@ -344,8 +344,8 @@ async function roundTrip(
         return (test1 && test2 && test3) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing prettyPrintAmount',
-       'prettyPrintAmount works',
-       'prettyPrintAmount gave unexpected output!');
+    'prettyPrintAmount works',
+    'prettyPrintAmount gave unexpected output!');
 
     await tester.test(async () => {
         /* Create a new wallet */
@@ -373,8 +373,8 @@ async function roundTrip(
         return (test1 && test2 && test3) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing getMnemonicSeedForAddress',
-       'getMnemonicSeedForAddress works',
-       'getMnemonicSeedForAddress doesn\'t work!');
+    'getMnemonicSeedForAddress works',
+    'getMnemonicSeedForAddress doesn\'t work!');
 
     await tester.test(async () => {
         const wallet = await WalletBackend.createWallet(new Daemon(daemonAddress, daemonPort));
@@ -385,8 +385,8 @@ async function roundTrip(
         return (feeAddress === '' && feeAmount === 0) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing getNodeFee',
-       'getNodeFee works',
-       'getNodeFee doesn\'t work!');
+    'getNodeFee works',
+    'getNodeFee doesn\'t work!');
 
     await tester.test(async () => {
         const wallet = await WalletBackend.createWallet(daemon);
@@ -398,8 +398,8 @@ async function roundTrip(
         return (_.isEqual(err, SUCCESS)) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing getPrimaryAddress',
-       'getPrimaryAddress works',
-       'getPrimaryAddress doesn\'t work!');
+    'getPrimaryAddress works',
+    'getPrimaryAddress doesn\'t work!');
 
     await tester.test(async () => {
         const privateViewKey: string = '3c6cfe7a29a371278abd9f5725a3d2af5eb73d88b4ed9b8d6c2ff993bbc4c20a';
@@ -414,8 +414,8 @@ async function roundTrip(
             TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing getPrivateViewKey',
-       'getPrivateViewKey works',
-       'getPrivateViewKey doesn\'t work!');
+    'getPrivateViewKey works',
+    'getPrivateViewKey doesn\'t work!');
 
     await tester.test(async () => {
         const [keyWallet, ] = await WalletBackend.importWalletFromKeys(
@@ -434,16 +434,16 @@ async function roundTrip(
             TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing getSpendKeys',
-       'getSpendKeys works',
-       'getSpendKeys doesn\'t work!');
+    'getSpendKeys works',
+    'getSpendKeys doesn\'t work!');
 
     await tester.test(async () => {
         let address;
         try {
-        address = await createIntegratedAddress(
-            'TRTLv2Fyavy8CXG8BPEbNeCHFZ1fuDCYCZ3vW5H5LXN4K2M2MHUpTENip9bbavpHvvPwb4NDkBWrNgURAd5DB38FHXWZyoBh4wW',
-            'b23df6e84c1dd619d3601a28e5948d92a0d096aea1621969c591a90e986794a0',
-        );
+            address = await createIntegratedAddress(
+                'TRTLv2Fyavy8CXG8BPEbNeCHFZ1fuDCYCZ3vW5H5LXN4K2M2MHUpTENip9bbavpHvvPwb4NDkBWrNgURAd5DB38FHXWZyoBh4wW',
+                'b23df6e84c1dd619d3601a28e5948d92a0d096aea1621969c591a90e986794a0',
+            );
         } catch (err) {
             console.log(JSON.stringify(err));
         }
@@ -469,8 +469,8 @@ async function roundTrip(
         return (test1 && test2 && test3) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing createIntegratedAddress',
-       'createIntegratedAddress works',
-       'createIntegratedAddress doesn\'t work!');
+    'createIntegratedAddress works',
+    'createIntegratedAddress doesn\'t work!');
 
     await tester.test(async () => {
         const [keyWallet, ] = await WalletBackend.importWalletFromKeys(
@@ -487,8 +487,8 @@ async function roundTrip(
             TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing supplied config is applied',
-       'Supplied config applied correctly',
-       'Supplied config not applied!');
+    'Supplied config applied correctly',
+    'Supplied config not applied!');
 
     await tester.test(async () => {
         const test1: boolean = !isValidMnemonicWord('aaaaa');
@@ -501,8 +501,8 @@ async function roundTrip(
         return (test1 && test2 && test3 && test4 && test5 && test6) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing isValidMnemonic',
-       'isValidMnemonic works',
-       'isValidMnemonic doesn\'t work!');
+    'isValidMnemonic works',
+    'isValidMnemonic doesn\'t work!');
 
     await tester.test(async () => {
         const daemon2: Daemon = new Daemon('127.0.0.1', 11898);
@@ -523,8 +523,8 @@ async function roundTrip(
             ? TestStatus.PASS
             : TestStatus.FAIL;
     }, 'Testing swapNode',
-       'swapNode works',
-       'swapNode doesn\'t work!');
+    'swapNode works',
+    'swapNode doesn\'t work!');
 
     await tester.test(async () => {
         const daemon2: Daemon = new Daemon('this is not a valid host', 7777);
@@ -548,8 +548,8 @@ async function roundTrip(
         return (success) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing daemon events',
-       'Daemon events work',
-       'Daemon events don\'t work!');
+    'Daemon events work',
+    'Daemon events don\'t work!');
 
     await tester.test(async () => {
         /* Load a test file to check compatibility with C++ wallet backend */
@@ -576,8 +576,8 @@ async function roundTrip(
         return (a && b && c && d) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing rewind',
-       'Rewind succeeded',
-       'Rewind failed');
+    'Rewind succeeded',
+    'Rewind failed');
 
     await tester.test(async () => {
         const [keyWallet, ] = await WalletBackend.importWalletFromKeys(
@@ -601,8 +601,8 @@ async function roundTrip(
         return (a && b && c) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing subwallets',
-       'Subwallets work',
-       'Subwallet tests don\'t work!');
+    'Subwallets work',
+    'Subwallet tests don\'t work!');
 
     await tester.test(async () => {
         const wallet = await WalletBackend.createWallet(daemon);
@@ -620,8 +620,8 @@ async function roundTrip(
         return (success) ? TestStatus.PASS : TestStatus.FAIL;
 
     }, 'Testing getWalletCount',
-       'getWalletCount works',
-       'getWalletCount doesn\'t work!');
+    'getWalletCount works',
+    'getWalletCount doesn\'t work!');
 
     if (doPerformanceTests) {
         await tester.test(async () => {
@@ -650,8 +650,8 @@ async function roundTrip(
             return (test1 && test2) ? TestStatus.PASS : TestStatus.FAIL;
 
         }, 'Testing getSyncStatus (5 second test)',
-           'getSyncStatus works',
-           'getSyncStatus doesn\'t work! (Is the blockchain cache down?)');
+        'getSyncStatus works',
+        'getSyncStatus doesn\'t work! (Is the blockchain cache down?)');
 
         await tester.test(async () => {
 
@@ -686,8 +686,8 @@ async function roundTrip(
             return TestStatus.PASS;
 
         }, 'Testing underivePublicKey performance',
-           'underivePublicKey performance test complete',
-           'underivePublicKey performance test failed!');
+        'underivePublicKey performance test complete',
+        'underivePublicKey performance test failed!');
 
         await tester.test(async () => {
             const loopIterations: number = 1000;
@@ -713,8 +713,8 @@ async function roundTrip(
             return TestStatus.PASS;
 
         }, 'Testing generateKeyDerivation performance',
-           'generateKeyDerivation performance test complete',
-           'generateKeyDerivation performance test failed!');
+        'generateKeyDerivation performance test complete',
+        'generateKeyDerivation performance test failed!');
 
         await tester.test(async () => {
             const [walletTmp, ] = await WalletBackend.importWalletFromSeed(
@@ -754,8 +754,8 @@ async function roundTrip(
             return TestStatus.PASS;
 
         }, 'Testing wallet syncing performance (60 second test)',
-           'Wallet syncing performance test complete',
-           'Wallet syncing performance test failed!');
+        'Wallet syncing performance test complete',
+        'Wallet syncing performance test failed!');
     }
 
     if (TurtleCoinCrypto.type === CryptoType.NODEADDON) {
@@ -795,10 +795,10 @@ async function roundTrip(
                 return TestStatus.FAIL;
             }
         },
-            'Create Wallet from Ledger',
-            'Wallet Created',
-            'Failed to connect to available Ledger',
-            'Ledger tests skipped');
+        'Create Wallet from Ledger',
+        'Wallet Created',
+        'Failed to connect to available Ledger',
+        'Ledger tests skipped');
 
         await tester.test(async () => {
             if (skipLedgerTests) {
@@ -815,10 +815,10 @@ async function roundTrip(
                 return TestStatus.FAIL;
             }
         },
-            'Get Wallet Address',
-            'Retrieved wallet address',
-            'Failed to retrieve wallet address',
-            'Ledger tests skipped');
+        'Get Wallet Address',
+        'Retrieved wallet address',
+        'Failed to retrieve wallet address',
+        'Ledger tests skipped');
 
         await tester.test(async () => {
             if (skipLedgerTests) {
@@ -833,10 +833,10 @@ async function roundTrip(
 
             return TestStatus.PASS;
         },
-            'Save Ledger Wallet',
-            'Saved wallet successfully',
-            'Failed to save wallet to file',
-            'Ledger tests skipped');
+        'Save Ledger Wallet',
+        'Saved wallet successfully',
+        'Failed to save wallet to file',
+        'Ledger tests skipped');
 
         await tester.test(async () => {
             if (skipLedgerTests) {
@@ -851,10 +851,10 @@ async function roundTrip(
 
             return TestStatus.FAIL;
         },
-            'Fail to open Ledger wallet without Ledger transport',
-            'Test passed',
-            'Test failed',
-            'Ledger tests skipped');
+        'Fail to open Ledger wallet without Ledger transport',
+        'Test passed',
+        'Test failed',
+        'Ledger tests skipped');
 
         await tester.test(async () => {
             if (skipLedgerTests) {
@@ -875,10 +875,10 @@ async function roundTrip(
 
             return TestStatus.PASS;
         },
-            'Open Ledger wallet',
-            'Test passed',
-            'Test failed',
-            'Ledger tests skipped');
+        'Open Ledger wallet',
+        'Test passed',
+        'Test failed',
+        'Ledger tests skipped');
 
         await tester.test(async () => {
             if (skipLedgerTests) {
@@ -893,10 +893,10 @@ async function roundTrip(
 
             return TestStatus.FAIL;
         },
-            'Fail to create subwallet for Ledger based wallet',
-            'Test passed',
-            'Test failed',
-            'Ledger tests skipped')
+        'Fail to create subwallet for Ledger based wallet',
+        'Test passed',
+        'Test failed',
+        'Ledger tests skipped')
 
         await tester.test(async () => {
             if (skipLedgerTests) {
@@ -905,7 +905,7 @@ async function roundTrip(
 
             const [, error] = await WalletBackend.importWalletFromLedger(
                 daemon, 2000000, {
-                ledgerTransport: transport});
+                    ledgerTransport: transport});
 
             if (error) {
                 return TestStatus.FAIL;
@@ -913,10 +913,10 @@ async function roundTrip(
 
             return TestStatus.PASS;
         },
-            'Import wallet from Ledger',
-            'Test passed',
-            'Test failed',
-            'Ledger tests skipped')
+        'Import wallet from Ledger',
+        'Test passed',
+        'Test failed',
+        'Ledger tests skipped')
     }
 
     /* Print a summary of passed/failed tests */
