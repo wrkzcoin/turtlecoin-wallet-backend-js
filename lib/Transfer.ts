@@ -1564,7 +1564,7 @@ function verifyTransactionFee(
     } else {
         const calculatedFee: number = expectedFee.feePerByte * transactionSize;
 
-         /* Ensure fee is greater or equal to the fee per byte specified,
+        /* Ensure fee is greater or equal to the fee per byte specified,
           * and no more than two times the fee per byte specified. */
         return actualFee >= calculatedFee && actualFee <= calculatedFee * 2;
     }
@@ -1640,7 +1640,7 @@ async function getRingParticipants(
 
     const randomOuts: Interfaces.RandomOutput[][] = [];
 
-     /* Do the same check as above here, again. The reason being that
+    /* Do the same check as above here, again. The reason being that
         we just find the first set of outputs matching the amount above,
         and if we requests, say, outputs for the amount 100 twice, the
         first set might be sufficient, but the second are not.

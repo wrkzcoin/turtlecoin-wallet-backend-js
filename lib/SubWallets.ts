@@ -131,12 +131,12 @@ export class SubWallets {
      * @param privateSpendKey Private spend key is optional if it's a view wallet
      */
     public static async init(
-         config: Config,
-         address: string,
-         scanHeight: number,
-         newWallet: boolean,
-         privateViewKey: string,
-         privateSpendKey?: string
+        config: Config,
+        address: string,
+        scanHeight: number,
+        newWallet: boolean,
+        privateViewKey: string,
+        privateSpendKey?: string
     ): Promise<SubWallets> {
         let timestamp = 0;
 
