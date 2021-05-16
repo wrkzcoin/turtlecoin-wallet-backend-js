@@ -1122,7 +1122,7 @@ export class WalletBackend extends EventEmitter {
         let timestamp = 0;
 
         if (newWallet) {
-            timestamp = getCurrentTimestampAdjusted(config.blockTargetTime);
+            timestamp = getCurrentTimestampAdjusted();
         }
 
         const walletSynchronizer = new WalletSynchronizer(

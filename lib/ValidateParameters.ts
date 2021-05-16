@@ -13,12 +13,24 @@ import { Config, MergeConfig, IConfig } from './Config';
 import { assertString, assertArray, assertBoolean } from './Assert';
 
 /**
+ * Verifies that all the addresses given are valid.
+ * 
+ * Example:
+ * ```javascript
+ * const address1 = 'TRTLv2txGW8daTunmAVV6dauJgEv1LezM2Hse7EUD5c11yKHsNDrzQ5UWNRmu2ToQVhDcr82ZPVXy4mU5D7w9RmfR747KeXD3UF';
+ * const address2 = 'TRTLv2Fyavy8CXG8BPEbNeCHFZ1fuDCYCZ3vW5H5LXN4K2M2MHUpTENip9bbavpHvvPwb4NDkBWrNgURAd5DB38FHXWZyoBh4wW';
+ * const addresses = [address1, address2];
+ * const isValid = await validateAddresses(addresses, false);
+ * 
+ * console.log(`Addresses ${addresses} are valid?`, isValid.errorCode == WalletErrorCode.SUCCESS ? 'yes' : 'no');
+ * ```
+ * 
  * @param addresses The addresses to validate
  * @param integratedAddressesAllowed Should we allow integrated addresses?
  * @param config
  *
- * Verifies that the addresses given are valid.
  * @returns Returns SUCCESS if valid, otherwise a WalletError describing the error
+ * 
  */
 export async function validateAddresses(
     addresses: string[],
@@ -65,7 +77,7 @@ export async function validateAddresses(
  * Example:
  * ```javascript
  * const address = 'TRTLv2txGW8daTunmAVV6dauJgEv1LezM2Hse7EUD5c11yKHsNDrzQ5UWNRmu2ToQVhDcr82ZPVXy4mU5D7w9RmfR747KeXD3UF';
- * const isValid = await validateAddress(address, false)
+ * const isValid = await validateAddress(address, false);
  * 
  * console.log(`Address at ${address} is valid?`, isValid ? 'yes' : 'no');
  * ```

@@ -19,7 +19,7 @@ export class Block {
         const block = Object.create(Block.prototype);
 
         return Object.assign(block, {
-            coinbaseTransaction: json.coinbaseTx ? RawCoinbaseTransaction.fromJSON(json.coinbaseTx) : undefined,
+            coinbaseTransaction: json.coinbaseTX ? RawCoinbaseTransaction.fromJSON(json.coinbaseTX) : undefined,
 
             transactions: json.transactions.map(RawTransaction.fromJSON),
 
