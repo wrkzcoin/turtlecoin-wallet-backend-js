@@ -217,7 +217,7 @@ export class Daemon extends EventEmitter {
      */
     private connected: boolean = true;
 
-    private useRawBlocks: boolean = true;
+    private useRawBlocks: boolean = false;
 
     /**
      * @param host The host to access the API on. Can be an IP, or a URL, for
