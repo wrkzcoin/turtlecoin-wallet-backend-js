@@ -1,8 +1,6 @@
-name: Build and Test
+name: Build Docs
 
 on:
-  push:
-  pull_request:
   release:
     types: [published]
 
@@ -12,10 +10,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node: ['12', '14']
-    name: ${{ matrix.os }} - Node ${{ matrix.node }} Test
+        node: ['14']
+
+    name: Build Docs
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     - uses: actions/setup-node@v1
       name: Set up Node
@@ -27,10 +28,13 @@ jobs:
       run: npm install -g yarn
 
     - name: Install Dependencies
-      run: yarn --scripts-prepend-node-path true --network-concurrency 1
+      run: yarn --scripts-prepend-node-path true
 
-    - name: Run Linter
-      run: yarn style
+    - name: Build Documentation
+      run: yarn docs
 
-    - name: Run Tests
-      run: yarn test-all
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs

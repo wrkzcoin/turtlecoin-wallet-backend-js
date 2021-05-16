@@ -177,4 +177,4 @@ function logCategoryToString(category: LogCategory) {
     }
 }
 
-export let logger = new Logger();
+export const logger = new Logger();

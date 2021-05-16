@@ -2,7 +2,7 @@
 //
 // Please see the included LICENSE file for more information.
 
-// tslint:disable: max-line-length
+/* eslint-disable max-len */
 
 import {EventEmitter} from 'events';
 import {
@@ -30,6 +30,7 @@ import {Config, IConfig, MergeConfig} from './Config';
 import {LogCategory, logger, LogLevel} from './Logger';
 import {SynchronizationStatus} from './SynchronizationStatus';
 import {SUCCESS, WalletError, WalletErrorCode} from './WalletError';
+import {CryptoUtils} from './CnUtils';
 
 import {
     Block,
@@ -295,7 +296,7 @@ export declare interface WalletBackend {
      * only be emitted if the daemon is using /getrawblocks (All non blockchain
      * cache daemons should support this).
      *
-     * This block object is an instance of the [Block wrkzcoin-utils class](https://utils.turtlecoin.dev/classes/block.html).
+     * This block object is an instance of the [Block turtlecoin-utils class](https://utils.turtlecoin.dev/classes/block.html).
      * See the Utils docs for further info on using this value.
      *
      * Note that a block emitted after a previous one could potentially have a lower
@@ -318,7 +319,7 @@ export declare interface WalletBackend {
      * only be emitted if the daemon is using /getrawblocks (All non blockchain
      * cache daemons should support this).
      *
-     * This transaction object is an instance of the [Transaction wrkzcoin-utils class](https://utils.turtlecoin.dev/classes/transaction.html).
+     * This transaction object is an instance of the [Transaction turtlecoin-utils class](https://utils.turtlecoin.dev/classes/transaction.html).
      * See the Utils docs for further info on using this value.
      *
      * Note that a transaction emitted after a previous one could potentially have a lower
@@ -343,11 +344,55 @@ export declare interface WalletBackend {
      * ```javascript
      * wallet.on('autooptimizeError', (error) => {
      *     console.error('Error: ', error);
-     * }
+     * });
+     *```
      *
      * @event This is emitted when an error occurs during auto optimization
      */
     on(event: 'autoOptimizeError', callback: (error: Error) => void): this;
+
+    /**
+     * This is emitted when the underlying cryptographic primitives (aka. Ledger Device) is likely waiting for the user to manually confirm a request
+     *
+     * Example:
+     * ```javascript
+     * wallet.on('user_confirm', () => {
+     *     console.warn('Awaiting manual user intervention');
+     * });
+     * ```
+     * @param event
+     * @param callback
+     */
+    on(event: 'user_confirm', callback: () => void): this;
+
+    /**
+     * This is emitted when the underlying cryptographic primitives (aka. Ledger Device) returns data to us
+     *
+     * Example:
+     * ```javascript
+     * wallet.on('transport_send', (data) => {
+     *     console.warn('Received data: %s', data);;
+     * });
+     * ```
+     *
+     * @param event
+     * @param callback
+     */
+    on(event: 'transport_receive', callback: (data: string) => void): this;
+
+    /**
+     * This is emitted when we send data to the underlying cryptographic primitives (aka. Ledger Device)
+     *
+     * Example:
+     * ```javascript
+     * wallet.on('transport_send', (data) => {
+     *     console.warn('Sent data: %s', data);;
+     * });
+     * ```
+     * @param event
+     * @param callback
+     */
+    on(event: 'transport_send', callback: (data:string) => void): this;
 }
 
 /**
@@ -488,7 +533,7 @@ export class WalletBackend extends EventEmitter {
      * }
      * ```
      *
-     * @param daemon        An implementation of the Daemon interface.
+     * @param daemon
      *
      * @param json          Wallet info encoded as a JSON encoded string. Note
      *                      that this should be a *string*, NOT a JSON object.
@@ -507,11 +552,38 @@ export class WalletBackend extends EventEmitter {
             LogCategory.GENERAL,
         );
 
+        const merged: Config = MergeConfig(config);
+
         assertString(json, 'json');
 
         try {
-            const wallet = JSON.parse(json, WalletBackend.reviver);
-            wallet.initAfterLoad(daemon, MergeConfig(config));
+            const wallet: WalletBackend = JSON.parse(json, WalletBackend.reviver);
+
+            if (await wallet.isLedgerRequired()) {
+                if (!merged.ledgerTransport) {
+                    return [undefined, new WalletError(WalletErrorCode.LEDGER_TRANSPORT_REQUIRED)];
+                }
+
+                try {
+                    await CryptoUtils(merged).init();
+
+                    await CryptoUtils(merged).fetchKeys();
+
+                    const ledgerAddress = CryptoUtils(merged).address;
+
+                    if (!ledgerAddress) {
+                        return [undefined, new WalletError(WalletErrorCode.LEDGER_COULD_NOT_GET_KEYS)];
+                    }
+
+                    if (wallet.getPrimaryAddress() !== await ledgerAddress.address()) {
+                        return [undefined, new WalletError(WalletErrorCode.LEDGER_WRONG_DEVICE_FOR_WALLET_FILE)];
+                    }
+                } catch (e) {
+                    return [undefined, new WalletError(WalletErrorCode.LEDGER_COULD_NOT_GET_KEYS)];
+                }
+            }
+
+            wallet.initAfterLoad(daemon, merged);
             return [wallet, undefined];
         } catch (err) {
             return [undefined, new WalletError(WalletErrorCode.WALLET_FILE_CORRUPTED)];
@@ -539,7 +611,7 @@ export class WalletBackend extends EventEmitter {
      * }
      * ```
      *
-     * @param daemon        An implementation of the Daemon interface.
+     * @param daemon
      *
      * @param scanHeight    The height to begin scanning the blockchain from.
      *                      This can greatly increase sync speeds if given.
@@ -611,7 +683,7 @@ export class WalletBackend extends EventEmitter {
      * }
      * ```
      *
-     * @param daemon        An implementation of the Daemon interface.
+     * @param daemon
      *
      * @param scanHeight    The height to begin scanning the blockchain from.
      *                      This can greatly increase sync speeds if given.
@@ -673,6 +745,91 @@ export class WalletBackend extends EventEmitter {
     }
 
     /**
+     * Imports a wallet from a Ledger hardware wallet
+     *
+     * Example:
+     * ```javascript
+     * const WB = require('turtlecoin-wallet-backend');
+     * const TransportNodeHID = require('@ledgerhq/hw-transport-node-hid').default
+     *
+     * const daemon = new WB.Daemon('127.0.0.1', 11898);
+     *
+     * const transport = await TransportNodeHID.create();
+     *
+     * const [wallet, err] = await WB.WalletBackend.importWalletFromLedger(daemon, 100000, {
+     *     ledgerTransport: transport
+     * });
+     *
+     * if (err) {
+     *      console.log('Failed to load wallet: ' + err.toString());
+     * }
+     * ```
+     *
+     * @param daemon
+     *
+     * @param scanHeight    The height to begin scanning the blockchain from.
+     *                      This can greatly increase sync speeds if given.
+     *                      Defaults to zero.
+     *
+     * @param config
+     */
+    public static async importWalletFromLedger(
+        daemon: Daemon,
+        scanHeight: number = 0,
+        config: IConfig): Promise<[WalletBackend, undefined] | [undefined, WalletError]> {
+
+        logger.log(
+            'Function importWalletFromLedger called',
+            LogLevel.DEBUG,
+            LogCategory.GENERAL,
+        );
+
+        if (!config.ledgerTransport) {
+            return [undefined, new WalletError(WalletErrorCode.LEDGER_TRANSPORT_REQUIRED)];
+        }
+
+        assertNumber(scanHeight, 'scanHeight');
+
+        if (scanHeight < 0) {
+            return [undefined, new WalletError(WalletErrorCode.NEGATIVE_VALUE_GIVEN)];
+        }
+
+        if (!Number.isInteger(scanHeight)) {
+            return [undefined, new WalletError(WalletErrorCode.NON_INTEGER_GIVEN)];
+        }
+
+        const merged = MergeConfig(config);
+
+        let address: Address;
+
+        try {
+            await CryptoUtils(merged).init();
+
+            await CryptoUtils(merged).fetchKeys();
+
+            const tmpAddress = CryptoUtils(merged).address;
+
+            if (tmpAddress) {
+                address = tmpAddress;
+            } else {
+                return [undefined, new WalletError(WalletErrorCode.LEDGER_COULD_NOT_GET_KEYS)];
+            }
+        } catch (e) {
+            return [undefined, new WalletError(WalletErrorCode.LEDGER_COULD_NOT_GET_KEYS)];
+        }
+
+        /* Can't sync from the current scan height, not newly created */
+        const newWallet: boolean = false;
+
+        const wallet = await WalletBackend.init(
+            merged, daemon, await address.address(), scanHeight, newWallet,
+            address.view.privateKey, '0'.repeat(64),
+        );
+
+        return [wallet, undefined];
+    }
+
+    /**
      * This method imports a wallet you have previously created, in a 'watch only'
      * state. This wallet can view incoming transactions, but cannot send
      * transactions. It also cannot view outgoing transactions, so balances
@@ -697,7 +854,7 @@ export class WalletBackend extends EventEmitter {
      * }
      * ```
      *
-     * @param daemon        An implementation of the Daemon interface.
+     * @param daemon
      *
      * @param scanHeight    The height to begin scanning the blockchain from.
      *                      This can greatly increase sync speeds if given.
@@ -769,7 +926,7 @@ export class WalletBackend extends EventEmitter {
      * const wallet = await WB.WalletBackend.createWallet(daemon);
      * ```
      *
-     * @param daemon        An implementation of the Daemon interface.
+     * @param daemon
      * @param config
      */
     public static async createWallet(
@@ -788,7 +945,21 @@ export class WalletBackend extends EventEmitter {
 
         const merged = MergeConfig(config);
 
-        const address = await Address.fromEntropy(undefined, undefined, merged.addressPrefix);
+        let address = await Address.fromEntropy(undefined, undefined, merged.addressPrefix);
+
+        if (merged.ledgerTransport) {
+            await CryptoUtils(merged).init();
+
+            await CryptoUtils(merged).fetchKeys();
+
+            const ledgerAddress = CryptoUtils(merged).address;
+
+            if (ledgerAddress) {
+                address = ledgerAddress;
+            } else {
+                throw new Error('Could not create wallet from Ledger transport');
+            }
+        }
 
         return WalletBackend.init(
             merged, daemon, await address.address(), scanHeight, newWallet,
@@ -1200,6 +1371,10 @@ export class WalletBackend extends EventEmitter {
             LogCategory.GENERAL,
         );
 
+        if (!await this.subwalletsSupported()) {
+            return [undefined, new WalletError(WalletErrorCode.LEDGER_SUBWALLETS_NOT_SUPPORTED)];
+        }
+
         const currentHeight: number = this.walletSynchronizer.getHeight();
 
         return this.subWallets.addSubWallet(currentHeight);
@@ -1237,6 +1412,10 @@ export class WalletBackend extends EventEmitter {
             LogLevel.DEBUG,
             LogCategory.GENERAL,
         );
+
+        if (!await this.subwalletsSupported()) {
+            return [undefined, new WalletError(WalletErrorCode.LEDGER_SUBWALLETS_NOT_SUPPORTED)];
+        }
 
         const currentHeight: number = this.walletSynchronizer.getHeight();
 
@@ -1301,6 +1480,10 @@ export class WalletBackend extends EventEmitter {
             LogCategory.GENERAL,
         );
 
+        if (!await this.subwalletsSupported()) {
+            return [undefined, new WalletError(WalletErrorCode.LEDGER_SUBWALLETS_NOT_SUPPORTED)];
+        }
+
         const currentHeight: number = this.walletSynchronizer.getHeight();
 
         if (scanHeight === undefined) {
@@ -1352,6 +1535,10 @@ export class WalletBackend extends EventEmitter {
             LogLevel.DEBUG,
             LogCategory.GENERAL,
         );
+
+        if (!await this.subwalletsSupported()) {
+            return new WalletError(WalletErrorCode.LEDGER_SUBWALLETS_NOT_SUPPORTED);
+        }
 
         assertString(address, 'address');
 
@@ -1777,7 +1964,7 @@ export class WalletBackend extends EventEmitter {
     public internal(): {
         sync: (sleep: boolean) => Promise<boolean>;
         updateDaemonInfo: () => Promise<void>;
-    } {
+        } {
         logger.log(
             'Function internal called',
             LogLevel.DEBUG,
@@ -2478,7 +2665,7 @@ export class WalletBackend extends EventEmitter {
      * }
      *
      */
-    public async sendRawPreparedTransaction(rawTransaction: PreparedTransaction) {
+    public async sendRawPreparedTransaction(rawTransaction: PreparedTransaction): Promise<SendTransactionResult> {
         logger.log(
             'Function sendRawPreparedTransaction called',
             LogLevel.DEBUG,
@@ -2889,7 +3076,7 @@ export class WalletBackend extends EventEmitter {
 
             if (this.shouldPerformAutoOptimize && this.autoOptimize) {
                 this.performAutoOptimize()
-                    .catch(error => this.emit('autoOptimizeError', error));
+                        .catch(error => this.emit('autoOptimizeError', error));
             }
         } else {
 
@@ -3187,6 +3374,22 @@ export class WalletBackend extends EventEmitter {
                 this.emit('deadnode');
             }
         });
+
+        /**
+         *  Bubble up the events from the utils library; however, first
+         *  we need to clear any existing listeners for this method as we don't want
+         *  to create a memory leak if the setupEventHandlers method is called
+         *  multiple times
+         */
+        CryptoUtils(this.config).removeAllListeners();
+
+        CryptoUtils(this.config).on('user_confirm', () => this.emit('user_confirm'));
+
+        CryptoUtils(this.config).on('transport_receive',
+            (data: string) => this.emit('transport_receive', data));
+
+        CryptoUtils(this.config).on('transport_send',
+            (data: string) => this.emit('transport_send', data));
     }
 
     /**
@@ -3283,5 +3486,15 @@ export class WalletBackend extends EventEmitter {
 
         /* We're done. */
         this.currentlyOptimizing = false;
+    }
+
+    private async isLedgerRequired(): Promise<boolean> {
+        const [privateSpendKey] = await this.getPrimaryAddressPrivateKeys();
+
+        return !this.subWallets.isViewWallet && privateSpendKey === '0'.repeat(64);
+    }
+
+    private async subwalletsSupported(): Promise<boolean> {
+        return !(await this.isLedgerRequired() && this.config.ledgerTransport);
     }
 }

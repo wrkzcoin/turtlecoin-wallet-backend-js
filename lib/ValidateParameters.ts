@@ -61,6 +61,15 @@ export async function validateAddresses(
 
 /**
  * Verifies that the address given is valid.
+ * 
+ * Example:
+ * ```javascript
+ * const address = 'TRTLv2txGW8daTunmAVV6dauJgEv1LezM2Hse7EUD5c11yKHsNDrzQ5UWNRmu2ToQVhDcr82ZPVXy4mU5D7w9RmfR747KeXD3UF';
+ * const isValid = await validateAddress(address, false)
+ * 
+ * console.log(`Address at ${address} is valid?`, isValid ? 'yes' : 'no');
+ * ```
+ * 
  * @param address The address to validate.
  * @param integratedAddressAllowed Should an integrated address be allowed?
  * @param config

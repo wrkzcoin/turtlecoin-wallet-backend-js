@@ -1,8 +1,5 @@
 ![image](https://user-images.githubusercontent.com/34389545/35821974-62e0e25c-0a70-11e8-87dd-2cfffeb6ed47.png)
 
-#### Master Build Status
-[![Build Status](https://travis-ci.org/turtlecoin/turtlecoin-wallet-backend-js.svg?branch=master)](https://travis-ci.org/turtlecoin/turtlecoin-wallet-backend-js)
-
 #### NPM
 [![NPM](https://nodei.co/npm/turtlecoin-wallet-backend.png?compact=true)](https://npmjs.org/package/turtlecoin-wallet-backend)
 
@@ -49,7 +46,7 @@ const WB = require('turtlecoin-wallet-backend');
     /* OR
     const daemon = new WB.Daemon('blockapi.turtlepay.io', 443);
     */
-    
+
     const wallet = WB.WalletBackend.createWallet(daemon);
 
     console.log('Created wallet');
@@ -163,6 +160,38 @@ In this example, we only print messages that fall into the SYNC category.
 You can view available categories and log levels in the documentation.
 
 ## Changelog
+
+### v6.0.5
+
+* Fix issue halting sync when transaction is missing a transaction public key
+
+### v6.0.4
+
+* Fix issue generating transactions with a ledger
+
+### v6.0.3
+
+* Update turtlecoin-utils
+* New events emitted when a ledger is waiting for user input
+
+### v6.0.2
+
+* Fix object-sizeof being incorrectly imported
+
+### v6.0.2
+
+* Fix bug where package.json was not correctly read in npm release
+
+### v6.0.0
+
+* Supports v1.0.0 daemon API
+* No longer supports v0.28.3 daemon API
+* Supports using a ledger nano to control private keys
+* Can specify whether you want to sync with raw blocks or not when initializing daemon
+* Fix auto optimize disabling not working correctly
+* Warn users when using non native crypto
+* Can send extra data with tx
+* More prepared transaction functions
 
 ### v5.0.4
 

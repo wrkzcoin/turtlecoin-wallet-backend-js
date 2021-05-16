@@ -3,7 +3,7 @@
 // Please see the included LICENSE file for more information.
 
 import * as _ from 'lodash';
-const sizeof = require('object-sizeof');
+import { sizeof } from 'object-sizeof';
 
 import { EventEmitter } from 'events';
 
@@ -149,7 +149,7 @@ export class WalletSynchronizer extends EventEmitter {
 
     public processBlock(
         block: Block,
-        ourInputs: [string, TransactionInput][]) {
+        ourInputs: [string, TransactionInput][]): TransactionData {
 
         const txData: TransactionData = new TransactionData();
 
@@ -202,24 +202,16 @@ export class WalletSynchronizer extends EventEmitter {
 
         /* Process the coinbase tx if we're not skipping them for speed */
         if (processCoinbaseTransactions && block.coinbaseTransaction) {
-            let inputs_outputs = await this.processTransactionOutputs(
+            inputs = inputs.concat(await this.processTransactionOutputs(
                 block.coinbaseTransaction, block.blockHeight,
-            ) || undefined;
-
-            if (inputs_outputs !== undefined) {
-                inputs = inputs.concat(inputs_outputs);
-            }
+            ));
         }
 
         /* Process the normal txs */
         for (const tx of block.transactions) {
-            let inputs_outputs = await this.processTransactionOutputs(
+            inputs = inputs.concat(await this.processTransactionOutputs(
                 tx, block.blockHeight,
-            ) || undefined;
-
-            if (inputs_outputs !== undefined) {
-                inputs = inputs.concat(inputs_outputs);
-            }
+            ));
         }
 
         return inputs;
@@ -596,59 +588,53 @@ export class WalletSynchronizer extends EventEmitter {
      */
     private async processTransactionOutputs(
         rawTX: RawCoinbaseTransaction,
-        blockHeight: number): Promise<[string, TransactionInput][] | undefined> {
+        blockHeight: number): Promise<[string, TransactionInput][]> {
 
         const inputs: [string, TransactionInput][] = [];
 
-        try {
-            const derivation: string = await generateKeyDerivation(
-                rawTX.transactionPublicKey, this.privateViewKey, this.config,
-            );
-
-            const spendKeys: string[] = this.subWallets.getPublicSpendKeys();
-
-            for (const [outputIndex, output] of rawTX.keyOutputs.entries()) {
-                /* Derive the spend key from the transaction, using the previous
-                   derivation */
-                const derivedSpendKey = await underivePublicKey(
-                    derivation, outputIndex, output.key, this.config,
-                );
-
-                /* See if the derived spend key matches any of our spend keys */
-                if (!_.includes(spendKeys, derivedSpendKey)) {
-                    continue;
-                }
-
-                /* The public spend key of the subwallet that owns this input */
-                const ownerSpendKey = derivedSpendKey;
-
-                /* Not spent yet! */
-                const spendHeight: number = 0;
-
-                const [keyImage, privateEphemeral] = await this.subWallets.getTxInputKeyImage(
-                    ownerSpendKey, derivation, outputIndex,
-                );
-
-                const txInput: TransactionInput = new TransactionInput(
-                    keyImage, output.amount, blockHeight,
-                    rawTX.transactionPublicKey, outputIndex, output.globalIndex,
-                    output.key, spendHeight, rawTX.unlockTime, rawTX.hash,
-                    privateEphemeral,
-                );
-
-                inputs.push([ownerSpendKey, txInput]);
-            }
-
+        if (rawTX.transactionPublicKey === undefined) {
             return inputs;
-        } catch (err) {
-            logger.log(
-                'Failed to generateKeyDerivation: ' + err.toString(),
-                LogLevel.DEBUG,
-                LogCategory.SYNC,
-            );
         }
 
-        return undefined;
+        const derivation: string = await generateKeyDerivation(
+            rawTX.transactionPublicKey, this.privateViewKey, this.config,
+        );
+
+        const spendKeys: string[] = this.subWallets.getPublicSpendKeys();
+
+        for (const [outputIndex, output] of rawTX.keyOutputs.entries()) {
+            /* Derive the spend key from the transaction, using the previous
+               derivation */
+            const derivedSpendKey = await underivePublicKey(
+                derivation, outputIndex, output.key, this.config,
+            );
+
+            /* See if the derived spend key matches any of our spend keys */
+            if (!_.includes(spendKeys, derivedSpendKey)) {
+                continue;
+            }
+
+            /* The public spend key of the subwallet that owns this input */
+            const ownerSpendKey = derivedSpendKey;
+
+            /* Not spent yet! */
+            const spendHeight: number = 0;
+
+            const [keyImage, privateEphemeral] = await this.subWallets.getTxInputKeyImage(
+                ownerSpendKey, derivation, outputIndex,
+            );
+
+            const txInput: TransactionInput = new TransactionInput(
+                keyImage, output.amount, blockHeight,
+                rawTX.transactionPublicKey, outputIndex, output.globalIndex,
+                output.key, spendHeight, rawTX.unlockTime, rawTX.hash,
+                privateEphemeral,
+            );
+
+            inputs.push([ownerSpendKey, txInput]);
+        }
+
+        return inputs;
     }
 
     private processCoinbaseTransaction(
@@ -662,8 +648,8 @@ export class WalletSynchronizer extends EventEmitter {
 
         const relevantInputs: [string, TransactionInput][]
             = _.filter(ourInputs, ([, input]) => {
-            return input.parentTransactionHash === rawTX.hash;
-        });
+                return input.parentTransactionHash === rawTX.hash;
+            });
 
         for (const [publicSpendKey, input] of relevantInputs) {
             transfers.set(
@@ -699,8 +685,8 @@ export class WalletSynchronizer extends EventEmitter {
 
         const relevantInputs: [string, TransactionInput][]
             = _.filter(ourInputs, ([, input]) => {
-            return input.parentTransactionHash === rawTX.hash;
-        });
+                return input.parentTransactionHash === rawTX.hash;
+            });
 
         for (const [publicSpendKey, input] of relevantInputs) {
             transfers.set(

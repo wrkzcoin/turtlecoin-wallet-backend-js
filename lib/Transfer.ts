@@ -177,25 +177,9 @@ export async function sendFusionTransactionAdvanced(
     const paymentID: string = '';
 
     /* Fusion transactions are free */
-    let fee: number = 0;
-
-    if (daemon.getNetworkBlockCount() >= FUSION_FEE_V1_HEIGHT && daemon.getNetworkBlockCount() < FUSION_ZERO_FEE_V2_HEIGHT) {
-        fee = FUSION_FEE_V1;
-    }
+    const fee: number = 0;
 
     let fusionTX: CreatedTransaction;
-
-    /* Not enough unspent inputs for a fusion TX, we're fully optimized */
-    if (fee > foundMoney) {
-        logger.log(
-            'Wallet is fully optimized, cancelling fusion transaction',
-            LogLevel.DEBUG,
-            LogCategory.TRANSACTIONS,
-        );
-
-        returnValue.error = new WalletError(WalletErrorCode.FULLY_OPTIMIZED);
-        return returnValue;
-    }
 
     while (true) {
         logger.log(
@@ -217,7 +201,7 @@ export async function sendFusionTransactionAdvanced(
         }
 
         /* Amount of the transaction */
-        const amount = _.sumBy(ourInputs, (input) => input.input.amount) - fee;
+        const amount = _.sumBy(ourInputs, (input) => input.input.amount);
 
         /* Number of outputs this transaction will create */
         const numOutputs = splitAmountIntoDenominations(amount).length;
@@ -397,6 +381,10 @@ export async function sendTransactionBasic(
         undefined,
         undefined,
         paymentID,
+        undefined,
+        undefined,
+        relayToNetwork,
+        sendAll,
     );
 }
 
@@ -1287,9 +1275,9 @@ async function makeTransaction(
                 publicEphemeral: '', // Required by compiler, not used in func
                 transactionKeys: {
                     derivedKey: '',
-                    outputIndex: 0,
-                    publicKey: '',
-                }, // again required by compiler but not used in func
+                    outputIndex: input.input.transactionIndex,
+                    publicKey: input.input.transactionPublicKey,
+                },
             },
             key: input.input.key,
             keyImage: input.input.keyImage,
@@ -1395,9 +1383,6 @@ async function relayTransaction(
     daemon: Daemon,
     config: Config): Promise<[TX, undefined] | [undefined, WalletError]> {
 
-    let relaySuccess: boolean;
-    let errorMessage: string | undefined;
-
     logger.log(
         'Relaying transaction',
         LogLevel.DEBUG,
@@ -1427,13 +1412,14 @@ async function relayTransaction(
             ? ''
             : `The daemon did not accept our transaction. Error: ${errorMessage}.`;
 
+    if (!_.isEqual(error, SUCCESS)) {
         logger.log(
-            `Failed to relay transaction. ${customMessage}`,
+            `Failed to relay transaction. ${error}`,
             LogLevel.DEBUG,
             LogCategory.TRANSACTIONS,
         );
 
-        return [undefined, new WalletError(WalletErrorCode.DAEMON_ERROR, customMessage)];
+        return [undefined, error];
     }
 
     logger.log(
@@ -1607,7 +1593,7 @@ function verifyTransactionFee(
     } else {
         const calculatedFee: number = expectedFee.feePerByte * transactionSize;
 
-         /* Ensure fee is greater or equal to the fee per byte specified,
+        /* Ensure fee is greater or equal to the fee per byte specified,
           * and no more than two times the fee per byte specified. */
         return actualFee >= calculatedFee && actualFee <= calculatedFee * 2;
     }
@@ -1653,7 +1639,7 @@ async function getRingParticipants(
 
     for (const amount of amounts) {
         /* Check each amount is present in outputs */
-        const foundOutputs = _.find(outs, ([outAmount, ignore]) => amount === outAmount);
+        const foundOutputs = _.find(outs, ([outAmount, ]) => amount === outAmount);
 
         if (foundOutputs === undefined) {
             return new WalletError(
@@ -1683,7 +1669,7 @@ async function getRingParticipants(
 
     const randomOuts: Interfaces.RandomOutput[][] = [];
 
-     /* Do the same check as above here, again. The reason being that
+    /* Do the same check as above here, again. The reason being that
         we just find the first set of outputs matching the amount above,
         and if we requests, say, outputs for the amount 100 twice, the
         first set might be sufficient, but the second are not.

@@ -1,6 +1,6 @@
 {
   "name": "turtlecoin-wallet-backend",
-  "version": "6.0.0",
+  "version": "6.0.7",
   "description": "",
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
@@ -9,7 +9,7 @@
     "build": "./node_modules/.bin/tsc",
     "test": "npm run-script build && node dist/tests/tests.js",
     "test-all": "npm run-script build && node dist/tests/tests.js --do-performance-tests",
-    "style": "./node_modules/.bin/tslint -c tslint.json 'lib/**/*.ts'",
+    "style": "yarn eslint . --ext .js,.jsx,.ts,.tsx",
     "docs": "./node_modules/.bin/typedoc --options ./typedoc.js ./lib/ && touch docs/.nojekyll",
     "prepare": "npm run-script build"
   },
@@ -23,30 +23,37 @@
   ],
   "license": "AGPL-3.0",
   "dependencies": {
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "object-sizeof": "https://github.com/zpalmtree/sizeof",
     "pbkdf2": "^3.0.17",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.8",
     "wrkzcoin-utils": "https://github.com/wrkzcoin/wrkzcoin-utils#dev",
-    "typescript": "^4.0.3"
+    "typescript": "^4.1.5"
   },
   "devDependencies": {
+    "@types/ledgerhq__hw-transport": "^4.21.3",
     "@types/ledgerhq__hw-transport-node-hid": "^4.22.1",
-    "@types/lodash": "^4.14.149",
-    "@types/node": "^14.0.27",
+    "@types/lodash": "^4.14.168",
+    "@types/node": "^14.14.31",
     "@types/pbkdf2": "^3.0.0",
     "@types/request-promise-native": "^1.0.17",
+    "@typescript-eslint/eslint-plugin": "^4.15.1",
+    "@typescript-eslint/parser": "^4.15.1",
     "colors": "^1.4.0",
+    "eslint": "^7.20.0",
+    "eslint-config-prettier": "^8.0.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jsdoc": "^32.1.0",
+    "eslint-plugin-prefer-arrow": "^1.2.3",
     "husky": "^4.2.5",
-    "lint-staged": "^10.1.3",
-    "tslint": "^6.1.1",
+    "lint-staged": "^10.5.4",
     "typedoc": "^0.18.0",
     "typedoc-plugin-no-inherit": "^1.1.10"
   },
   "lint-staged": {
     "**/*.{ts}": [
-      "./node_modules/tslint/bin/tslint -c tslint.json --fix",
+      "yarn style",
       "git add"
     ]
   },
