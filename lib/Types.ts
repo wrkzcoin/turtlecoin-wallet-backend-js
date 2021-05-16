@@ -23,11 +23,11 @@ export class Block {
 
             transactions: json.transactions.map(RawTransaction.fromJSON),
 
-            blockHeight: Number(json.blockHeight),
+            blockHeight: Number(json.height),
 
-            blockHash: json.blockHash,
+            blockHash: json.hash,
 
-            blockTimestamp: Number(json.blockTimestamp),
+            blockTimestamp: Number(json.timestamp),
         });
     }
 
@@ -73,7 +73,7 @@ export class RawCoinbaseTransaction {
 
             hash: json.hash,
 
-            transactionPublicKey: json.txPublicKey,
+            transactionPublicKey: json.publicKey,
 
             unlockTime: Number(json.unlockTime),
         });
@@ -117,11 +117,11 @@ export class RawTransaction extends RawCoinbaseTransaction {
 
             hash: json.hash,
 
-            transactionPublicKey: json.txPublicKey,
+            transactionPublicKey: json.publicKey,
 
             unlockTime: Number(json.unlockTime),
 
-            paymentID: json.paymentID,
+            paymentID: json.paymentId,
 
             keyInputs: json.inputs.map(KeyInput.fromJSON),
         });
@@ -225,7 +225,7 @@ export class Transaction {
     public totalAmount(): number {
         let sum: number = 0;
 
-        for (const [publicKey, amount] of this.transfers) {
+        for (const [, amount] of this.transfers) {
             sum += amount;
         }
 
@@ -338,7 +338,7 @@ export class TransactionInput {
         spendHeight: number,
         unlockTime: number,
         parentTransactionHash: string,
-        privateEphemeral: string) {
+        privateEphemeral?: string) {
 
         this.keyImage = keyImage;
         this.amount = amount;
@@ -443,7 +443,6 @@ export class KeyOutput {
 
         return Object.assign(keyOutput, {
             amount: json.amount,
-            globalIndex: json.globalIndex,
             key: json.key,
         });
     }
@@ -454,8 +453,7 @@ export class KeyOutput {
     /* The output amount */
     public readonly amount: number;
 
-    /* The index of the amount in the DB. The blockchain cache api returns
-       this, but the regular daemon does not. */
+    /* The index of the amount in the DB. */
     public readonly globalIndex?: number;
 
     constructor(
@@ -476,8 +474,7 @@ export class KeyInput {
 
         return Object.assign(keyInput, {
             amount: json.amount,
-            keyImage: json.k_image,
-            outputIndexes: json.key_offsets,
+            keyImage: json.keyImage,
         });
     }
 
@@ -487,18 +484,12 @@ export class KeyInput {
     /* The key image of this input */
     public readonly keyImage: string;
 
-    /* The output indexes of the fake and real outputs this input was created
-       from, in the global 'DB' */
-    public readonly outputIndexes: number[];
-
     constructor(
         amount: number,
-        keyImage: string,
-        outputIndexes: number[]) {
+        keyImage: string) {
 
         this.amount = amount;
         this.keyImage = keyImage;
-        this.outputIndexes = outputIndexes;
     }
 }
 
@@ -522,7 +513,7 @@ export class TxInputAndOwner {
     /* The input */
     public readonly input: TransactionInput;
 
-   /* The private spend key of the input owner */
+    /* The private spend key of the input owner */
     public readonly privateSpendKey: string;
 
     /* The public spend key of the input owner */
@@ -654,22 +645,11 @@ export interface SendTransactionResult {
     nodeFee?: number;
 }
 
-export enum DaemonType {
-    ConventionalDaemon = 0,
-    BlockchainCacheApi = 1,
-}
-
 export interface DaemonConnection {
     /* What is the host/ip of this daemon */
     host: string;
     /* What is the port of this daemon */
     port: number;
-
-    /* Is this daemon a conventional daemon or a blockchain cache API */
-    daemonType: DaemonType;
-    /* Have we worked out if this daemon is a conventional daemon or a cache
-       API yet */
-    daemonTypeDetermined: boolean;
 
     /* Is this daemon connection served over HTTPS or HTTP */
     ssl: boolean;

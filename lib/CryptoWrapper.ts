@@ -2,9 +2,9 @@
 //
 // Please see the included LICENSE file for more information.
 
-import { Crypto } from 'wrkzcoin-utils';
-import { CryptoUtils } from './CnUtils';
-import { Config } from './Config';
+import {Crypto} from 'wrkzcoin-utils';
+import {CryptoUtils} from './CnUtils';
+import {Config} from './Config';
 
 const TurtleCoinCrypto = new Crypto();
 
@@ -14,17 +14,8 @@ export async function generateKeyDerivation(
     transactionPublicKey: string,
     privateViewKey: string,
     config: Config): Promise<string> {
-
-    if (config.generateKeyDerivation) {
-        return config.generateKeyDerivation(transactionPublicKey, privateViewKey);
-    }
-
     try {
-        const key = await TurtleCoinCrypto.generateKeyDerivation(
-            transactionPublicKey,
-            privateViewKey,
-        );
-        return key;
+        return CryptoUtils(config).generateKeyDerivation(transactionPublicKey, privateViewKey);
     } catch (err) {
         return nullKey;
     }
@@ -35,7 +26,7 @@ export async function generateKeyImagePrimitive(
     privateSpendKey: string,
     outputIndex: number,
     derivation: string,
-    config: Config): Promise<[string, string]> {
+    config: Config): Promise<[string, string?]> {
 
     if (config.derivePublicKey && config.deriveSecretKey && config.generateKeyImage) {
         /* Derive the transfer public key from the derived key, the output index, and our public spend key */
@@ -60,7 +51,6 @@ export async function generateKeyImagePrimitive(
         );
 
         return [keys.keyImage, keys.privateEphemeral];
-
     } catch (err) {
         return [nullKey, nullKey];
     }
@@ -72,7 +62,7 @@ export async function generateKeyImage(
     publicSpendKey: string,
     privateSpendKey: string,
     transactionIndex: number,
-    config: Config): Promise<[string, string]> {
+    config: Config): Promise<[string, string?]> {
 
     const derivation: string = await generateKeyDerivation(
         transactionPublicKey, privateViewKey, config,
@@ -93,11 +83,9 @@ export async function underivePublicKey(
     }
 
     try {
-        const key = await TurtleCoinCrypto.underivePublicKey(
+        return TurtleCoinCrypto.underivePublicKey(
             derivation, outputIndex, outputKey,
         );
-
-        return key;
     } catch (err) {
         return nullKey;
     }

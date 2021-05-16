@@ -19,23 +19,24 @@ import { validateAddresses, validatePaymentID } from './ValidateParameters';
 import { SUCCESS } from './WalletError';
 import { English } from './WordList';
 import { assertString, assertNumber } from './Assert';
+import { LogCategory, logger, LogLevel } from './Logger';
 
 /**
  * Creates an integrated address from a standard address, and a payment ID.
  *
  * Throws if either address or payment ID is invalid.
  */
-export function createIntegratedAddress(
+export async function createIntegratedAddress(
     address: string,
     paymentID: string,
-    config: IConfig = new Config()): string {
+    config: IConfig = new Config()): Promise<string> {
 
     assertString(address, 'address');
     assertString(paymentID, 'paymentID');
 
     const tempConfig: Config = MergeConfig(config);
 
-    let error = validateAddresses([address], false, tempConfig);
+    let error = await validateAddresses([address], false, tempConfig);
 
     if (!_.isEqual(error, SUCCESS)) {
         throw error;
@@ -71,10 +72,10 @@ export function isHex64(val: string): boolean {
  *
  * @hidden
  */
-export function addressToKeys(address: string, config: IConfig = new Config()): [string, string] {
+export async function addressToKeys(address: string, config: IConfig = new Config()): Promise<[string, string]> {
     const tempConfig: Config = MergeConfig(config);
 
-    const parsed = Address.fromAddress(address, tempConfig.addressPrefix);
+    const parsed = await Address.fromAddress(address, tempConfig.addressPrefix);
 
     return [parsed.view.publicKey, parsed.spend.publicKey];
 }
@@ -104,10 +105,10 @@ export function getUpperBound(val: number, nearestMultiple: number): number {
  *
  * @hidden
  */
-export function getCurrentTimestampAdjusted(blockTargetTime: number = 30): number {
+export function getCurrentTimestampAdjusted(): number {
     const timestamp = Math.floor(Date.now() / 1000);
 
-    return timestamp - (100 * blockTargetTime);
+    return timestamp - (60 * 60 * 6);
 }
 
 /**
@@ -118,16 +119,30 @@ export function getCurrentTimestampAdjusted(blockTargetTime: number = 30): numbe
 export function isInputUnlocked(unlockTime: number, currentHeight: number): boolean {
     /* Might as well return fast with the case that is true for nearly all
        transactions (excluding coinbase) */
+
+    let result = false;
+
     if (unlockTime === 0) {
-        return true;
+        result = true;
     }
 
     if (unlockTime >= MAX_BLOCK_NUMBER) {
-        return (Math.floor(Date.now() / 1000)) >= unlockTime;
+        result = (Math.floor(Date.now() / 1000)) >= unlockTime;
     /* Plus one for CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS */
     } else {
-        return currentHeight + 1 >= unlockTime;
+        if (currentHeight === 0) {
+            result = false;
+        }
+        result = (currentHeight + 1) >= unlockTime;
     }
+
+    logger.log(
+        `Check transaction for isInputUnlocked unlockTime: ${unlockTime.toString()}, currentHeight: ${currentHeight.toString()}, return ${result.toString()}`,
+        LogLevel.DEBUG,
+        [LogCategory.SYNC, LogCategory.TRANSACTIONS],
+    );
+
+    return result;
 }
 
 /**
@@ -271,7 +286,7 @@ export function isValidMnemonicWord(word: string): boolean {
  * Verifies whether a mnemonic is valid. Returns a boolean, and an error messsage
  * describing what is invalid.
  */
-export function isValidMnemonic(mnemonic: string, config: IConfig = new Config()): [boolean, string] {
+export async function isValidMnemonic(mnemonic: string, config: IConfig = new Config()): Promise<[boolean, string]> {
     assertString(mnemonic, 'mnemonic');
 
     const tempConfig: Config = MergeConfig(config);
@@ -299,7 +314,7 @@ export function isValidMnemonic(mnemonic: string, config: IConfig = new Config()
     }
 
     try {
-        Address.fromMnemonic(words.join(' '), undefined, tempConfig.addressPrefix);
+        await Address.fromMnemonic(words.join(' '), undefined, tempConfig.addressPrefix);
         return [true, ''];
     } catch (err) {
         return [false, 'Mnemonic checksum word is invalid'];
@@ -309,7 +324,7 @@ export function isValidMnemonic(mnemonic: string, config: IConfig = new Config()
 export function getMinimumTransactionFee(
     transactionSize: number,
     height: number,
-    config: IConfig = new Config()) {
+    config: IConfig = new Config()): number {
 
     const tempConfig: Config = MergeConfig(config);
 
@@ -325,7 +340,7 @@ export function getTransactionFee(
     transactionSize: number,
     height: number,
     feePerByte: number,
-    config: IConfig = new Config()) {
+    config: IConfig = new Config()): number {
 
     const tempConfig: Config = MergeConfig(config);
 
@@ -348,7 +363,6 @@ export function estimateTransactionSize(
     const AMOUNT_SIZE = 8 + 2; // varint
     const GLOBAL_INDEXES_VECTOR_SIZE_SIZE: number = 1 // varint
     const GLOBAL_INDEXES_INITIAL_VALUE_SIZE: number = 4; // varint
-    const GLOBAL_INDEXES_DIFFERENCE_SIZE: number = 4; // varint
     const SIGNATURE_SIZE: number = 64;
     const EXTRA_TAG_SIZE: number = 1;
     const INPUT_TAG_SIZE: number = 1;

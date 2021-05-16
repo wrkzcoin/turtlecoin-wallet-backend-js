@@ -1,0 +1,36 @@
+name: Build and Test
+
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: ['12', '14']
+    name: ${{ matrix.os }} - Node ${{ matrix.node }} Test
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-node@v1
+      name: Set up Node
+      with:
+        node-version: ${{ matrix.node }}
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Install Yarn
+      run: npm install -g yarn
+
+    - name: Install Dependencies
+      run: yarn --scripts-prepend-node-path true --network-concurrency 1
+
+    - name: Run Linter
+      run: yarn style
+
+    - name: Run Tests
+      run: yarn test-all
