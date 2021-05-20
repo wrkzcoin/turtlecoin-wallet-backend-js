@@ -3,7 +3,7 @@
 // Please see the included LICENSE file for more information.
 
 import { MixinLimit, MixinLimits } from './MixinLimits';
-import { LedgerTransport } from 'wrkzcoin-utils';
+import { LedgerTransport } from 'turtlecoin-utils';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const version = require('../../package.json').version;

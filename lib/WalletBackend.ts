@@ -12,7 +12,7 @@ import {
     CryptoType,
     Transaction as CreatedTransaction,
     Transaction as UtilsTransaction
-} from 'wrkzcoin-utils';
+} from 'turtlecoin-utils';
 
 import * as fs from 'fs';
 import * as _ from 'lodash';

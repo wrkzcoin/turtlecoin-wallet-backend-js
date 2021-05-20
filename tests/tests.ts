@@ -18,7 +18,7 @@ import {
 
 import {generateKeyDerivation, underivePublicKey} from '../lib/CryptoWrapper';
 
-import {Address, Crypto as TurtleCoinCrypto, CryptoType, LedgerTransport} from 'wrkzcoin-utils';
+import {Address, Crypto as TurtleCoinCrypto, CryptoType, LedgerTransport} from 'turtlecoin-utils';
 
 import { Tester, TestStatus } from './tester'
 import { ValidateParametersTests } from './lib/ValidateParametersTests'

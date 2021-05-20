@@ -20,7 +20,7 @@ import { addressToKeys, getCurrentTimestampAdjusted, isInputUnlocked } from './U
 import { SUCCESS, WalletError, WalletErrorCode } from './WalletError';
 
 import * as _ from 'lodash';
-import { Address } from 'wrkzcoin-utils';
+import { Address } from 'turtlecoin-utils';
 
 /**
  * Stores each subwallet, along with transactions and public spend keys

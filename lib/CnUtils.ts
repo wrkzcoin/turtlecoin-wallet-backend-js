@@ -2,7 +2,7 @@
 //
 // Please see the included LICENSE file for more information.
 
-import { CryptoNote, LedgerNote, ICryptoNote } from 'wrkzcoin-utils';
+import { CryptoNote, LedgerNote, ICryptoNote } from 'turtlecoin-utils';
 import { Config } from './Config';
 import * as _ from 'lodash';
 
