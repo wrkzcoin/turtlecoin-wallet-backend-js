@@ -389,7 +389,7 @@ export class Daemon extends EventEmitter {
 
         let data;
 
-        const endpoint = this.useRawBlocks ? '/sync/raw' : '/sync';
+        const endpoint = this.useRawBlocks ? '/sync/raw' : '/getwalletsyncdata';
 
         try {
             [data] = await this.makePostRequest(endpoint, {
